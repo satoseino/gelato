@@ -1,0 +1,14 @@
+diff --git "a/oct\001al space.txt" "b/oct\001al space.txt"
+new file mode 100644
+index 0000000..f6ecc49
+--- /dev/null
++++ "b/oct\001al space.txt"	
+@@ -0,0 +1 @@
++other word
+diff --git "a/sp ace \"quote\".txt" "b/sp ace \"quote\".txt"
+new file mode 100644
+index 0000000..4f5b278
+--- /dev/null
++++ "b/sp ace \"quote\".txt"	
+@@ -0,0 +1 @@
++word

@@ -1,0 +1,3 @@
+[
+  {"path": ".gitmodules", "status": "Added", "lines": ["[submodule \"mysub\"]", "\tpath = mysub", "\turl = ../sub"]}
+]

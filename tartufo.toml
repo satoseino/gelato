@@ -2,6 +2,7 @@
 exclude-path-patterns = [
     {path-pattern = 'go\.sum$', reason = 'module checksums'},
     {path-pattern = 'detect/testdata/signatures\.json$', reason = 'Python-generated signature goldens'},
+    {path-pattern = 'git/testdata/[^/]+\.(patch|json)$', reason = 'object IDs in patches captured from git'},
 ]
 
 exclude-signatures = [

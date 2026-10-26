@@ -98,6 +98,17 @@ linters:
         linters:
           - gosec
         text: G304|G703
+      # git is the fixed executable; arguments are built from pinned option
+      # lists, object IDs and repository paths, never passed to a shell.
+      - path: ^git/repo\.go$
+        linters:
+          - gosec
+        text: 'G204: Subprocess launched with'
+      # Test fixtures run git with test-chosen arguments.
+      - path: ^internal/gittest/gittest\.go$
+        linters:
+          - gosec
+        text: 'G204: Subprocess launched with'
 issues:
   max-issues-per-linter: 0
   max-same-issues: 0

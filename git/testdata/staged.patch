@@ -1,0 +1,86 @@
+diff --git a/bad.txt b/bad.txt
+new file mode 100644
+index 0000000..3aa82c2
+--- /dev/null
++++ b/bad.txt
+@@ -0,0 +1 @@
++bad ��
+diff --git a/bin.dat b/bin.dat
+new file mode 100644
+index 0000000..8352675
+Binary files /dev/null and b/bin.dat differ
+diff --git a/crlf.txt b/crlf.txt
+new file mode 100644
+index 0000000..9a915a4
+--- /dev/null
++++ b/crlf.txt
+@@ -0,0 +1 @@
++crlf
+diff --git a/del.txt b/del.txt
+deleted file mode 100644
+index 587be6b..0000000
+--- a/del.txt
++++ /dev/null
+@@ -1 +0,0 @@
+-x
+diff --git a/e mpty b b/e mpty b
+new file mode 100644
+index 0000000..e69de29
+diff --git a/mod.txt b/mod.txt
+index 4cb29ea..223c1f0 100644
+--- a/mod.txt
++++ b/mod.txt
+@@ -2 +2 @@ one
+-two
++++ plus line
+@@ -3,0 +4 @@ three
++four
+diff --git a/mode.sh b/mode.sh
+old mode 100644
+new mode 100755
+diff --git a/ren.txt b/renamed.txt
+similarity index 88%
+rename from ren.txt
+rename to renamed.txt
+index 84a8578..46c8605 100644
+--- a/ren.txt
++++ b/renamed.txt
+@@ -4,0 +5 @@ pi rho
++added tail
+diff --git a/sp ace.txt b/sp ace.txt
+new file mode 100644
+index 0000000..c1b0730
+--- /dev/null
++++ b/sp ace.txt	
+@@ -0,0 +1 @@
++x
+\ No newline at end of file
+diff --git "a/t\"q.txt" "b/t\"q.txt"
+new file mode 100644
+index 0000000..bca70f3
+--- /dev/null
++++ "b/t\"q.txt"
+@@ -0,0 +1 @@
++q
+diff --git a/tc b/tc
+deleted file mode 100644
+index 718f4d2..0000000
+--- a/tc
++++ /dev/null
+@@ -1 +0,0 @@
+-t
+diff --git a/tc b/tc
+new file mode 120000
+index 0000000..d550755
+--- /dev/null
++++ b/tc
+@@ -0,0 +1 @@
++mod.txt
+\ No newline at end of file
+diff --git a/ünï.txt b/ünï.txt
+new file mode 100644
+index 0000000..5fb50d3
+--- /dev/null
++++ b/ünï.txt
+@@ -0,0 +1 @@
++héllo
