@@ -1,0 +1,11 @@
+[tool.tartufo]
+exclude-path-patterns = [
+    {path-pattern = 'go\.sum$', reason = 'module checksums'},
+    {path-pattern = 'detect/testdata/signatures\.json$', reason = 'Python-generated signature goldens'},
+]
+
+exclude-signatures = [
+    # The raw digest, not its signature: it is excluded wherever it appears,
+    # i.e. in detect/signature_test.go and .working-docs/spec/002-detection-engine.md.
+    {signature = '0e027678bd911189618fd0c11817c6900877b3933bcd54dea457f5e7029acebe', reason = 'Signature golden from spec 002'},
+]
