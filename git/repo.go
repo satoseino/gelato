@@ -111,7 +111,10 @@ func Open(dir string, opts ...Option) (*Repo, error) {
 	// Never take index.lock, which git commit holds while hooks run.
 	env = append(env, "GIT_OPTIONAL_LOCKS=0")
 
-	r := &Repo{gitPath: gitPath, root: dir, env: env}
+	// git version runs in the current directory, so a dir that doesn't exist
+	// is reported by rev-parse as not a repository rather than as a failed
+	// version check.
+	r := &Repo{gitPath: gitPath, env: env}
 	ctx := context.Background()
 
 	version, err := r.output(ctx, "version")
@@ -122,6 +125,8 @@ func Open(dir string, opts ...Option) (*Repo, error) {
 	if versionErr := checkVersion(version); versionErr != nil {
 		return nil, versionErr
 	}
+
+	r.root = dir
 
 	root, err := r.output(ctx, "rev-parse", "--show-toplevel")
 	if err != nil {

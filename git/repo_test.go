@@ -49,6 +49,17 @@ func TestOpenNotARepository(t *testing.T) {
 	}
 }
 
+func TestOpenMissingDirectory(t *testing.T) {
+	gittest.New(t)
+
+	dir := filepath.Join(t.TempDir(), "missing")
+
+	_, err := Open(dir)
+	if err == nil || !strings.HasPrefix(err.Error(), dir+" is not a valid git repository: ") {
+		t.Errorf("got error %v", err)
+	}
+}
+
 func TestStagedUnborn(t *testing.T) {
 	repo := gittest.New(t)
 	repo.Write("notes.txt", "first line\nsecond line\n")
