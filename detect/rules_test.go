@@ -47,6 +47,7 @@ func TestDefaultRules(t *testing.T) {
 	stripe := "sk" + "_live_" + cycle(alnum, 24)
 	stripeRestricted := "rk" + "_live_" + cycle(alnum, 99)
 	twilio := "S" + "K" + cycle(lowerHex, 32)
+	twilioUpper := "S" + "K" + cycle(digits+runeRange('A', 'F'), 32)
 	sendgrid := "S" + "G." + cycle(urlSafe, 22) + "." + cycle(urlSafe, 43)
 	npm := "np" + "m_" + cycle(alnum, 36)
 	pypi := "py" + "pi-" + "AgEIcHlwaS5vcmc" + cycle(urlSafe, 70)
@@ -128,6 +129,7 @@ func TestDefaultRules(t *testing.T) {
 		{rule: "Stripe secret key", name: "one rune short", text: stripe[:len(stripe)-1]},
 
 		{rule: "Twilio API key", name: "API key SID", text: "TWILIO_API_KEY=" + twilio, want: []string{twilio}},
+		{rule: "Twilio API key", name: "uppercase hex", text: twilioUpper, want: []string{twilioUpper}},
 		{rule: "Twilio API key", name: "account SID", text: "A" + "C" + cycle(lowerHex, 32)},
 		{rule: "Twilio API key", name: "one rune short", text: twilio[:len(twilio)-1]},
 		{rule: "Twilio API key", name: "not hex", text: "S" + "K" + cycle(lowerHex, 31) + "g"},
