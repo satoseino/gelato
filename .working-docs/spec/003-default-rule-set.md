@@ -20,7 +20,7 @@ Starting set (names are user-visible in output as `Detail`):
 | Name | Pattern (Go RE2) |
 |---|---|
 | `AWS access key ID` | `\b((?:AKIA\|ASIA\|ABIA\|ACCA)[A-Z2-7]{16})\b` |
-| `AWS secret access key` | `(?i)aws_?secret_?access_?key["']?\s*[:=]\s*["']?([A-Za-z0-9/+]{40})\b` |
+| `AWS secret access key` | `(?i)aws_?secret_?access_?key["']?\s*[:=]\s*["']?([A-Za-z0-9/+]{40})(?:[^A-Za-z0-9/+]\|$)` |
 | `GitHub token` | `\b(gh[pousr]_[A-Za-z0-9]{36,255})\b` |
 | `GitHub fine-grained token` | `\b(github_pat_[A-Za-z0-9_]{82})\b` |
 | `GitLab token` | `\b(glpat-[A-Za-z0-9_-]{20,})\b` |
@@ -31,10 +31,10 @@ Starting set (names are user-visible in output as `Detail`):
 | `Google service account` | `"type"\s*:\s*"service_account"` |
 | `Private key` | `-----BEGIN (?:RSA \|DSA \|EC \|OPENSSH \|PGP \|ENCRYPTED )?PRIVATE KEY(?: BLOCK)?-----` |
 | `Stripe secret key` | `\b((?:sk\|rk)_live_[A-Za-z0-9]{24,})\b` |
-| `Twilio API key` | `\b(SK[0-9a-f]{32})\b` |
+| `Twilio API key` | `\b(SK[0-9a-fA-F]{32})\b` |
 | `SendGrid API key` | `\b(SG\.[A-Za-z0-9_-]{22}\.[A-Za-z0-9_-]{43})` |
 | `npm token` | `\b(npm_[A-Za-z0-9]{36})\b` |
-| `PyPI token` | `\b(pypi-AgEIcHlwaS5vcmc[A-Za-z0-9_-]{50,})` |
+| `PyPI token` | `\b(pypi-AgEIcHlwaS5vcmc[A-Za-z0-9_-]{70,})` |
 | `OpenAI API key` | `\b(sk-(?:proj-\|svcacct-\|admin-)?[A-Za-z0-9_-]{20,}T3BlbkFJ[A-Za-z0-9_-]{20,})` |
 | `Anthropic API key` | `\b(sk-ant-[a-z]+\d{2}-[A-Za-z0-9_-]{80,})` |
 | `Hugging Face token` | `\b(hf_[A-Za-z]{34})\b` |
@@ -42,6 +42,8 @@ Starting set (names are user-visible in output as `Detail`):
 | `Password in URL` | `\b[a-zA-Z][a-zA-Z0-9+.-]*://[^\s:/@]+:([^\s:/@$<{][^\s:/@]{2,})@` |
 
 (`\|` above is table escaping; the Go source uses a plain `|`.)
+
+Verified against provider docs: the AWS secret key ends at any character outside its alphabet rather than `\b`, which fails after a trailing `/` or `+`; Twilio's API reference gives `^SK[0-9a-fA-F]{32}$`; PyPI documents `pypi-[A-Za-z0-9-_]{85,}`, so the 15-character `pypi.org` macaroon prefix is followed by at least 70.
 
 `Password in URL` skips passwords starting with `$`, `<` or `{`, so templates such as `mongodb://user:${MONGO_PASSWORD}@host` and `://user:<password>@` don't match.
 
