@@ -461,6 +461,16 @@ func TestScan(t *testing.T) {
 			want:  []found{},
 		},
 		{
+			name:  "order: a word's base64 candidates before its hex candidates",
+			cfg:   entropyOnly(),
+			lines: []string{highHex + "g" + highB64 + "." + highB64},
+			want: []found{
+				{Type: EntropyIssue, Match: highHex + "g" + highB64},
+				{Type: EntropyIssue, Match: highB64},
+				{Type: EntropyIssue, Match: highHex},
+			},
+		},
+		{
 			name:  "order: rules by name, then entropy by line",
 			cfg:   cfg.Config{Regex: true, Entropy: true},
 			rules: []Rule{wordRule, keyRule},

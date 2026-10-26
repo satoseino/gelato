@@ -76,9 +76,11 @@ func New(c cfg.Config, rules []Rule) (*Engine, error) {
 }
 
 // Scan returns the issues found in c: regex issues by rule name then
-// position, then entropy issues by line then position. An issue with the same
-// type, detail and match as an earlier one in c is reported once. A chunk
-// whose path matches an `exclude-path-patterns` entry yields nothing.
+// position, then entropy issues by line, then word, with a word's base64
+// candidates before its hex candidates, as tartufo orders them. An issue
+// with the same type, detail and match as an earlier one in c is reported
+// once. A chunk whose path matches an `exclude-path-patterns` entry yields
+// nothing.
 func (e *Engine) Scan(c Chunk) []Issue {
 	for _, p := range e.cfg.ExcludePaths {
 		if p.MatchString(c.Path) {
