@@ -94,7 +94,7 @@ linters:
         text: G304
       # Fixture paths are built from test-controlled names under testdata/ and
       # a per-test temp dir.
-      - path: ^cfg/config_test\.go$
+      - path: ^(cfg/config|cmd/gelato/main)_test\.go$
         linters:
           - gosec
         text: G304|G703

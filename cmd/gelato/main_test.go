@@ -25,12 +25,15 @@ func TestRun(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	invalid, err := filepath.Abs(filepath.Join("testdata", "invalid.toml"))
+	testdata, err := filepath.Abs("testdata")
 	if err != nil {
 		t.Fatal(err)
 	}
 
+	invalid := filepath.Join(testdata, "invalid.toml")
+
 	tests := []struct {
+		files      map[string]string
 		name       string
 		wantStdout string
 		wantStderr string
@@ -68,6 +71,20 @@ func TestRun(t *testing.T) {
 			wantStderr: "gelato: error: " + invalid + ": exclude-signatures[0].note: unknown key\n",
 		},
 		{
+			name:       "pre-commit loads tartufo.toml from the current directory",
+			files:      map[string]string{"tartufo.toml": "invalid.toml"},
+			args:       []string{"pre-commit"},
+			wantCode:   2,
+			wantStderr: "gelato: error: tartufo.toml: exclude-signatures[0].note: unknown key\n",
+		},
+		{
+			name:       "scan loads tartufo.toml from the repo-path argument",
+			files:      map[string]string{"repo/tartufo.toml": "invalid.toml"},
+			args:       []string{"scan", "repo"},
+			wantCode:   2,
+			wantStderr: "gelato: error: repo/tartufo.toml: exclude-signatures[0].note: unknown key\n",
+		},
+		{
 			name:       "pre-commit not implemented",
 			args:       []string{"pre-commit"},
 			wantCode:   2,
@@ -85,6 +102,21 @@ func TestRun(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			// Keep the commands away from any config in this repository.
 			t.Chdir(t.TempDir())
+
+			for dst, fixture := range tt.files {
+				data, err := os.ReadFile(filepath.Join(testdata, fixture))
+				if err != nil {
+					t.Fatal(err)
+				}
+
+				if err := os.MkdirAll(filepath.Dir(dst), 0o750); err != nil {
+					t.Fatal(err)
+				}
+
+				if err := os.WriteFile(dst, data, 0o600); err != nil {
+					t.Fatal(err)
+				}
+			}
 
 			var stdout, stderr bytes.Buffer
 
