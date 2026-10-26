@@ -122,8 +122,8 @@ func Load(explicit []string, repoDir string) (Config, error) {
 }
 
 // readTarget reads the first existing target config file in repoDir. found is
-// false when there is none, when it has no `[tool.tartufo]` table, or when it
-// is one of the explicit files (which were already read).
+// false when there is none, when its `[tool.tartufo]` table is missing or
+// empty, or when it is one of the explicit files (which were already read).
 func readTarget(repoDir string, explicit []fs.FileInfo) (l layer, found bool, err error) {
 	for _, name := range []string{"tartufo.toml", "pyproject.toml"} {
 		path := filepath.Join(repoDir, name)
@@ -152,7 +152,8 @@ func readTarget(repoDir string, explicit []fs.FileInfo) (l layer, found bool, er
 }
 
 // readFile parses the `[tool.tartufo]` table of the TOML file at path. found
-// is false when the file has no such table.
+// is false when the file has no such table or the table is empty, which
+// tartufo also treats as no config.
 func readFile(path string) (l layer, info fs.FileInfo, found bool, err error) {
 	f, err := os.Open(path)
 	if err != nil {
@@ -203,6 +204,10 @@ func readFile(path string) (l layer, info fs.FileInfo, found bool, err error) {
 	table, ok := rawTable.(map[string]any)
 	if !ok {
 		return layer{}, nil, false, fmt.Errorf("%s: tool.tartufo: expected a table, got %s", path, typeName(rawTable))
+	}
+
+	if len(table) == 0 {
+		return layer{}, info, false, nil
 	}
 
 	l, err = parseTable(table)

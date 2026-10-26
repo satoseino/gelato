@@ -147,6 +147,15 @@ func TestLoad(t *testing.T) {
 			want:    summary{RepoPath: ".", Regex: true, Entropy: true},
 		},
 		{
+			name: "tartufo.toml with empty table means no target config",
+			files: map[string]string{
+				"tartufo.toml":   "empty-table.toml",
+				"pyproject.toml": "pyproject.toml",
+			},
+			repoDir: ".",
+			want:    summary{RepoPath: ".", Regex: true, Entropy: true},
+		},
+		{
 			name: "explicit file merged after target file",
 			files: map[string]string{
 				"repo/tartufo.toml": "jarvis-like.toml",
@@ -360,6 +369,12 @@ func TestLoadExplicitErrors(t *testing.T) {
 			files:    map[string]string{"no-table.toml": "no-table.toml"},
 			explicit: []string{"no-table.toml"},
 			want:     "no-table.toml: no [tool.tartufo] table",
+		},
+		{
+			name:     "empty table",
+			files:    map[string]string{"empty-table.toml": "empty-table.toml"},
+			explicit: []string{"empty-table.toml"},
+			want:     "empty-table.toml: no [tool.tartufo] table",
 		},
 		{
 			name: "merged scalars disable all analysis",
