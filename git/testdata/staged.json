@@ -1,0 +1,11 @@
+[
+  {"path": "bad.txt", "status": "Added", "lines": ["bad \ufffd"]},
+  {"path": "crlf.txt", "status": "Added", "lines": ["crlf\r"]},
+  {"path": "e mpty b", "status": "Added", "lines": []},
+  {"path": "mod.txt", "status": "Modified", "lines": ["++ plus line", "four"]},
+  {"path": "renamed.txt", "status": "Renamed", "lines": ["added tail"]},
+  {"path": "sp ace.txt", "status": "Added", "lines": ["x"]},
+  {"path": "t\"q.txt", "status": "Added", "lines": ["q"]},
+  {"path": "tc", "status": "Added", "lines": ["mod.txt"]},
+  {"path": "ünï.txt", "status": "Added", "lines": ["héllo"]}
+]

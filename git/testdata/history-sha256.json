@@ -1,0 +1,4 @@
+[
+  {"commit": "d1ebbd1995b88a260f50f513666c38c052a34229d250d7029ebbd8238e23183a", "path": "notes.txt", "status": "Modified", "lines": ["changed line", "third line"]},
+  {"commit": "9b9247926edfc55b693fcf5d219e912f86a5b669ccd79ff36bda4d4705f217eb", "path": "notes.txt", "status": "Added", "lines": ["first line", "second line"]}
+]

@@ -1,0 +1,18 @@
+d1ebbd1995b88a260f50f513666c38c052a34229d250d7029ebbd8238e23183a
+diff --git a/notes.txt b/notes.txt
+index 0ce35a5..0c88b2d 100644
+--- a/notes.txt
++++ b/notes.txt
+@@ -2 +2,2 @@ first line
+-second line
++changed line
++third line
+9b9247926edfc55b693fcf5d219e912f86a5b669ccd79ff36bda4d4705f217eb
+diff --git a/notes.txt b/notes.txt
+new file mode 100644
+index 0000000..0ce35a5
+--- /dev/null
++++ b/notes.txt
+@@ -0,0 +1,2 @@
++first line
++second line

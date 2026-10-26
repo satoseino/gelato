@@ -1,0 +1,6 @@
+[
+  {"commit": "b8f345b0e9b8302744f8b6a57293da52f0d75cd7", "path": "em\tpty", "status": "Added", "lines": []},
+  {"commit": "b8f345b0e9b8302744f8b6a57293da52f0d75cd7", "path": "moved.txt", "status": "Renamed", "lines": []},
+  {"commit": "62035c4d1fd0054b90c8fc1a61c4ded2c30a3494", "path": "dash.txt", "status": "Modified", "lines": ["++ plussed"]},
+  {"commit": "ecf0facd80a3b929d0dc0182ae1658f7fd4c26e9", "path": "dash.txt", "status": "Added", "lines": ["-- dashed", "keep"]}
+]

@@ -1,0 +1,4 @@
+[
+  {"path": "oct\u0001al space.txt", "status": "Added", "lines": ["other word"]},
+  {"path": "sp ace \"quote\".txt", "status": "Added", "lines": ["word"]}
+]
