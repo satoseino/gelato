@@ -52,12 +52,14 @@ var (
 
 	// patchArgs pin the patch format ParsePatch expects against config such as
 	// color.ui, diff.mnemonicPrefix, diff.relative, diff.submodule,
-	// diff.algorithm, diff.external and textconv drivers. -M50% and Myers are
+	// diff.algorithm, diff.interHunkContext, diff.external and textconv
+	// drivers. Without --inter-hunk-context=0, hunks would gain context lines,
+	// which diff.suppressBlankEmpty prints as empty lines. -M50% and Myers are
 	// libgit2's defaults, which tartufo used.
 	patchArgs = []string{
 		"-p", "--no-color", "--no-ext-diff", "--no-textconv", "--no-relative",
 		"--src-prefix=a/", "--dst-prefix=b/", "-M50%", "--unified=0",
-		"--diff-algorithm=myers", "--submodule=short",
+		"--inter-hunk-context=0", "--diff-algorithm=myers", "--submodule=short",
 	}
 
 	// repoEnv lists the variables that route git to a repository, index or

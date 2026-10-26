@@ -91,6 +91,7 @@ func TestStagedEmptyFileWithSpace(t *testing.T) {
 func TestStagedHostileConfig(t *testing.T) {
 	repo := gittest.New(t)
 	repo.Write("mod.txt", "one\ntwo\n")
+	repo.Write("gap.txt", "first\n\nsecond\nthird\n")
 	repo.Write("del.txt", "gone\n")
 	repo.Write("bin.dat", "\x00\x01")
 	repo.Write("sub/old.txt", "alpha beta\ngamma delta\nepsilon zeta\neta theta\n")
@@ -106,14 +107,18 @@ func TestStagedHostileConfig(t *testing.T) {
 	tricky := `sp ace "quote" ü.txt`
 
 	repo.Write("mod.txt", "one\ntwo\nthree\n")
+	// Two changes around a blank line: diff.interHunkContext would join them
+	// into one hunk whose blank context line diff.suppressBlankEmpty empties.
+	repo.Write("gap.txt", "first edited\n\nsecond edited\nthird\n")
 	repo.Write("bin.dat", "\x00\x02")
 	repo.Write(tricky, "word\n")
 	repo.Git("rm", "--quiet", "del.txt")
 	repo.Git("mv", "sub/old.txt", "sub/new.txt")
 	repo.Write("sub/new.txt", "alpha beta\ngamma delta\nepsilon zeta\neta theta\niota kappa\n")
-	repo.Git("add", "mod.txt", "bin.dat", tricky, "sub/new.txt")
+	repo.Git("add", "mod.txt", "gap.txt", "bin.dat", tricky, "sub/new.txt")
 
 	want := []change{
+		{Path: "gap.txt", Status: "Modified", Lines: []string{"first edited", "second edited"}},
 		{Path: "mod.txt", Status: "Modified", Lines: []string{"three"}},
 		{Path: tricky, Status: "Added", Lines: []string{"word"}},
 		{Path: "sub/new.txt", Status: "Renamed", Lines: []string{"iota kappa"}},
@@ -128,6 +133,8 @@ func TestStagedHostileConfig(t *testing.T) {
 		{"diff.submodule", "log"},
 		{"diff.relative", "true"},
 		{"diff.algorithm", "patience"},
+		{"diff.interHunkContext", "3"},
+		{"diff.suppressBlankEmpty", "true"},
 		{"diff.renames", "false"},
 		{"color.ui", "always"},
 		{"color.diff", "always"},
