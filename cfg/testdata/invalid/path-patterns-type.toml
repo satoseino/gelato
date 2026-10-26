@@ -1,0 +1,2 @@
+[tool.tartufo]
+exclude-path-patterns = 'uv\.lock$'

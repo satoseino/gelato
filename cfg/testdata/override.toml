@@ -1,0 +1,8 @@
+[tool.tartufo]
+repo-path = 'from-override'
+entropy = true
+regex = false
+
+exclude-signatures = [
+    {signature = 'override-sig'},
+]

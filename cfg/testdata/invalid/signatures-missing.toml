@@ -1,0 +1,4 @@
+[tool.tartufo]
+exclude-signatures = [
+    {reason = 'no signature'},
+]

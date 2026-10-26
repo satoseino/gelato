@@ -1,0 +1,3 @@
+[tool.tartufo]
+repo-path = 'a'
+repo_path = 'b'

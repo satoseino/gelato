@@ -1,0 +1,5 @@
+[tool.tartufo]
+
+[[tool.tartufo.exclude-signatures]]
+signature = 'aot-sig'
+reason = 'array-of-tables syntax'

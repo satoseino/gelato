@@ -1,0 +1,1 @@
+{file}: exclude-entropy-patterns[3].pattern: error parsing regexp: invalid or unsupported Perl syntax: `(?=`

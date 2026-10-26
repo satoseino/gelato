@@ -1,0 +1,11 @@
+[tool.tartufo]
+repo_path = 'from-underscore'
+exclude_path_patterns = [
+    {path-pattern = 'docs/'},
+]
+exclude_entropy_patterns = [
+    {pattern = 'abc'},
+]
+exclude_signatures = [
+    {signature = 'underscore-sig'},
+]
