@@ -1,0 +1,7 @@
+[project]
+name = "example"
+
+[tool.tartufo]
+exclude-signatures = [
+    {signature = 'pyproject-sig'},
+]

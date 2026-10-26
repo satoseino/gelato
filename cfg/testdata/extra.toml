@@ -1,0 +1,11 @@
+[tool.tartufo]
+repo-path = 'from-extra'
+entropy = false
+
+exclude-path-patterns = [
+    {path-pattern = 'vendor/'},
+]
+
+exclude-signatures = [
+    {signature = 'extra-sig'},
+]

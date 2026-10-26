@@ -1,0 +1,18 @@
+Usage: gelato <command> [flags]
+
+Scan a git repository for secrets.
+
+Flags:
+  -h, --help             Show context-sensitive help.
+      --config=CONFIG    Read configuration from this file. Repeatable; list
+                         values are concatenated in order.
+  -V, --version          Print the version and exit.
+
+Commands:
+  pre-commit [flags]
+    Scan lines added in staged changes.
+
+  scan [<repo-path>] [flags]
+    Scan lines added across the repository's history.
+
+Run "gelato <command> --help" for more information on a command.

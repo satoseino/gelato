@@ -1,0 +1,4 @@
+[tool.tartufo]
+
+[tool.other]
+key = "value"

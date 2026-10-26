@@ -1,0 +1,7 @@
+[tool.tartufo]
+exclude-entropy-patterns = [
+    {pattern = 'ok'},
+    {pattern = 'ok'},
+    {pattern = 'ok'},
+    {pattern = 'foo(?=bar)'},
+]

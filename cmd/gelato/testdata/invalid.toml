@@ -1,0 +1,4 @@
+[tool.tartufo]
+exclude-signatures = [
+    {signature = 'abc', note = 'not a supported key'},
+]

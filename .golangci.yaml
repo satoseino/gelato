@@ -85,6 +85,19 @@ linters:
       branch-max-lines: 4
   exclusions:
     generated: lax
+    rules:
+      # Reading the config files the user names with --config, or that sit in
+      # the scanned repository, is the loader's purpose.
+      - path: ^cfg/config\.go$
+        linters:
+          - gosec
+        text: G304
+      # Fixture paths are built from test-controlled names under testdata/ and
+      # a per-test temp dir.
+      - path: ^(cfg/config|cmd/gelato/main)_test\.go$
+        linters:
+          - gosec
+        text: G304|G703
 issues:
   max-issues-per-linter: 0
   max-same-issues: 0

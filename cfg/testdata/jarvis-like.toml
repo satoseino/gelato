@@ -1,0 +1,21 @@
+[tool.tartufo]
+repo-path = '.'
+regex = true
+entropy = true
+
+exclude-path-patterns = [
+    {path-pattern = 'uv\.lock$', reason = 'lock file'},
+    {path-pattern = '.*package-lock\.json$', reason = 'lock file'},
+    {path-pattern = '.*\.svg$', reason = 'static images'},
+]
+
+exclude-entropy-patterns = [
+    {path-pattern = '\.env\.example$', pattern = 'PRIVATE_KEY=.*', reason = 'placeholder'},
+    {path-pattern = '(app|lib)/tests/.*', pattern = '.*TENANTID123.*', reason = 'public tenant ID'},
+]
+
+exclude-signatures = [
+    {signature = '1111111111111111111111111111111111111111111111111111111111111111', reason = 'fake token'},
+    {signature = '2222222222222222222222222222222222222222222222222222222222222222', reason = 'example ID'},
+    {signature = '1111111111111111111111111111111111111111111111111111111111111111', reason = 'listed twice'},
+]

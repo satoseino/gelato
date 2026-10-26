@@ -1,0 +1,5 @@
+[tool.tartufo]
+exclude-entropy-patterns = [
+    {pattern = 'KEY=', path-pattern = '\.env$'},
+    {pattern = 'TOKEN'},
+]

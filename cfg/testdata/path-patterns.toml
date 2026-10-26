@@ -1,0 +1,8 @@
+[tool.tartufo]
+exclude-path-patterns = [
+    {path-pattern = 'uv\.lock$'},
+    {path-pattern = '  '},
+    {path-pattern = '# commented out'},
+    {path-pattern = '  docs/  '},
+    {path-pattern = 'a|b'},
+]

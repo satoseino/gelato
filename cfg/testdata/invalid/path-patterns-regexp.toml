@@ -1,0 +1,6 @@
+[tool.tartufo]
+exclude-path-patterns = [
+    {path-pattern = 'ok'},
+    {path-pattern = 'ok'},
+    {path-pattern = '(unclosed'},
+]

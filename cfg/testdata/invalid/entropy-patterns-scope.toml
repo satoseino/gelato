@@ -1,0 +1,4 @@
+[tool.tartufo]
+exclude-entropy-patterns = [
+    {pattern = 'x', scope = 'word'},
+]

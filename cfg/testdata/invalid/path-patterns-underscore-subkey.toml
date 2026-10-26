@@ -1,0 +1,4 @@
+[tool.tartufo]
+exclude-path-patterns = [
+    {path_pattern = 'docs/'},
+]

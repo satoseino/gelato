@@ -39,9 +39,9 @@ New package `command` (owns the kong commands; real behavior arrives in specs 5 
 
 `func Load(explicit []string, repoDir string) (Config, error)`:
 
-1. **Explicit files** (`--config`, resolved against the working directory): each must exist and contain a `[tool.tartufo]` table, else error (tartufo treats a missing table as "no config", `config.py:63-69`, and `--config` turns that into an error, `:96-100`).
+1. **Explicit files** (`--config`, resolved against the working directory): each must exist and contain a non-empty `[tool.tartufo]` table, else error (tartufo treats a missing or empty table as "no config", `config.py:63-69`, and `--config` turns that into an error, `:96-100`). An empty table is reported the same way as a missing one.
 2. **Repository dir**: if `repoDir == ""` (only `scan` without an argument), use `repo-path` from the merged explicit files, else `"."`. This matches tartufo's `scan-local-repo` taking its `repo-path` argument default from `--config` (`commands/scan_local_repo.py:19-20`). The result is stored as `Config.RepoPath`, resolved to an absolute path. `repo-path` from the auto-discovered target file is validated but has no effect.
-3. **Target file**: in the repository dir, the first of `tartufo.toml`, `pyproject.toml` that exists. If that file has no `[tool.tartufo]` table, there is no target config and the other file is not consulted, as in tartufo (`config.py:57-68` stops at the first existing file). Skipped if it resolves to the same file as an explicit one (tartufo's `REFERENCED_CONFIG_FILES` check, `scanner.py:178`). No file found is not an error.
+3. **Target file**: in the repository dir, the first of `tartufo.toml`, `pyproject.toml` that exists. If that file has no `[tool.tartufo]` table, or an empty one, there is no target config and the other file is not consulted, as in tartufo (`config.py:57-68` stops at the first existing file). Skipped if it resolves to the same file as an explicit one (tartufo's `REFERENCED_CONFIG_FILES` check, `scanner.py:178`). No file found is not an error.
 4. **Merge** in order target file, then explicit files: list values concatenate, scalars from later files override earlier ones (tartufo's list concatenation, `config.py:111-116`).
 
 Two deliberate divergences from tartufo, both listed in the README (spec 7):
@@ -81,9 +81,9 @@ type EntropyExclusion struct {
 
 ### 6. Tests
 
-- `cfg/config_test.go`: table-driven over `cfg/testdata/*.toml` fixtures — discovery order, `pyproject.toml` used only when `tartufo.toml` is absent, a `tartufo.toml` without the table meaning no target config, missing table in an explicit file, explicit-file errors, merge order and list concatenation, explicit/target dedup, `repo-path` resolution, `_`/`-` normalization, every validation error message, `#`/blank path-pattern skipping, anchoring (`uv\.lock$` excludes `uv.lock` but not `sub/uv.lock`), entropy-pattern search semantics.
+- `cfg/config_test.go`: table-driven over `cfg/testdata/*.toml` fixtures — discovery order, `pyproject.toml` used only when `tartufo.toml` is absent, a `tartufo.toml` without the table meaning no target config, missing or empty table in an explicit file, explicit-file errors, merge order and list concatenation, explicit/target dedup, `repo-path` resolution, `_`/`-` normalization, every validation error message, `#`/blank path-pattern skipping, anchoring (`uv\.lock$` excludes `uv.lock` but not `sub/uv.lock`), entropy-pattern search semantics.
 - `cfg/testdata/jarvis-like.toml`: a trimmed fixture with the same shapes as `jarvis-registry/tartufo.toml` (a few entries per key, including a duplicated signature).
-- `cmd/gelato/main_test.go`: drives `run` in-process for `--help` (0), `--version` (0, prints `dev`), unknown flag (2), invalid config (2), stub `Run` (2), and a test-only command returning `command.ErrFindings`-wrapped error mapped to 1 via the same mapping function.
+- `cmd/gelato/main_test.go`: drives `run` in-process for `--help` (0), `--version` (0, prints `dev`), unknown flag (2), invalid `--config` file (2), invalid target config discovered by `pre-commit` in the working directory and by `scan <repo-path>` in its argument (2, error names `tartufo.toml` / `repo/tartufo.toml`), stub `Run` (2), and a test-only command returning `command.ErrFindings`-wrapped error mapped to 1 via the same mapping function.
 
 ---
 

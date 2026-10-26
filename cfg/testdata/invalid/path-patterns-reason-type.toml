@@ -1,0 +1,4 @@
+[tool.tartufo]
+exclude-path-patterns = [
+    {path-pattern = 'ok', reason = 1},
+]

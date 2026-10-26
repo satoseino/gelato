@@ -1,0 +1,1 @@
+{file}: exclude-entropy-patterns[0].path-pattern: error parsing regexp: invalid escape sequence: `\Z`
