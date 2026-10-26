@@ -243,6 +243,33 @@ func TestNewDoesNotReorderCallerRules(t *testing.T) {
 	}
 }
 
+// TestNewCopiesConfig changes the caller's exclusions after New; the Engine
+// must keep scanning with the ones it was given.
+func TestNewCopiesConfig(t *testing.T) {
+	c := cfg.Config{
+		Entropy:           true,
+		ExcludeSignatures: map[string]struct{}{},
+		ExcludePaths:      []*regexp.Regexp{regexp.MustCompile(`^(?:vendor/)`)},
+		ExcludeEntropyPatterns: []cfg.EntropyExclusion{{
+			Pattern: regexp.MustCompile(`unrelated`), PathPattern: regexp.MustCompile(``),
+		}},
+	}
+
+	e, err := New(c, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	c.ExcludeSignatures[highB64] = struct{}{}
+	c.ExcludePaths[0] = regexp.MustCompile(`^(?:app/)`)
+	c.ExcludeEntropyPatterns[0].Pattern = regexp.MustCompile(`token`)
+
+	got := summarize(e.Scan(Chunk{Path: "app/settings.py", Lines: []string{"token = " + highB64}}))
+	if want := []found{{Type: EntropyIssue, Match: highB64}}; !slices.Equal(got, want) {
+		t.Errorf("Scan() = %+v, want %+v", got, want)
+	}
+}
+
 func TestScan(t *testing.T) {
 	sigB64 := Signature(highB64, "app/settings.py")
 

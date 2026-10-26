@@ -3,6 +3,7 @@ package detect
 import (
 	"cmp"
 	"fmt"
+	"maps"
 	"math"
 	"regexp"
 	"slices"
@@ -51,7 +52,8 @@ const (
 // New returns an Engine for c and rules. Rules run in Name order, so output
 // doesn't depend on the order they are given in. A rule whose Pattern has
 // more than one capture group is an error, because Python's findall would
-// return tuples for it.
+// return tuples for it. The Engine keeps its own copies of rules and of c's
+// exclusions, so later changes to either by the caller don't reach it.
 func New(c cfg.Config, rules []Rule) (*Engine, error) {
 	for _, r := range rules {
 		if r.Pattern == nil {
@@ -65,6 +67,10 @@ func New(c cfg.Config, rules []Rule) (*Engine, error) {
 
 	sorted := slices.Clone(rules)
 	slices.SortStableFunc(sorted, func(a, b Rule) int { return cmp.Compare(a.Name, b.Name) })
+
+	c.ExcludeSignatures = maps.Clone(c.ExcludeSignatures)
+	c.ExcludePaths = slices.Clone(c.ExcludePaths)
+	c.ExcludeEntropyPatterns = slices.Clone(c.ExcludeEntropyPatterns)
 
 	return &Engine{rules: sorted, cfg: c}, nil
 }
