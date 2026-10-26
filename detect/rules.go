@@ -134,10 +134,12 @@ var defaultRules = []Rule{
 	},
 	{
 		// https://www.rfc-editor.org/rfc/rfc3986#section-3.2.1
-		// Passwords starting with "$", "<" or "{" are templates such as
-		// ${DB_PASSWORD} or <password>, not secrets.
+		// Passwords starting with "$", "<", "{", "%" or "*" are templates or
+		// masks such as ${DB_PASSWORD}, <password>, %(password)s or ********,
+		// not secrets. A literal placeholder word such as "password" still
+		// matches.
 		Name:    "Password in URL",
-		Pattern: regexp.MustCompile(`\b[a-zA-Z][a-zA-Z0-9+.-]*://[^\s:/@]+:([^\s:/@$<{][^\s:/@]{2,})@`),
+		Pattern: regexp.MustCompile(`\b[a-zA-Z][a-zA-Z0-9+.-]*://[^\s:/@]+:([^\s:/@$<{%*][^\s:/@]{2,})@`),
 	},
 }
 
