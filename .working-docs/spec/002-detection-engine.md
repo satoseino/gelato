@@ -49,7 +49,7 @@ A match is excluded when either the match itself or its signature is in `cfg.Con
 
 - Rules are sorted by `Name`, so output order doesn't depend on map or set order (tartufo uses a `set`, so its order varies).
 - A rule whose `Pattern` has more than one capture group is an error: tartufo's `findall` returns tuples in that case (`scanner.py:662`), and no rule needs it.
-- The `*Engine` is immutable after `New` and safe for concurrent use by many goroutines (`regexp.Regexp` is goroutine-safe), which the worker pools in specs 5 and 6 rely on.
+- The `*Engine` is immutable after `New` and safe for concurrent use by many goroutines (`regexp.Regexp` is goroutine-safe), which the worker pools in specs 5 and 6 rely on. `New` clones the rules and the config's `ExcludeSignatures` map and exclusion slices, so later changes by the caller don't reach the engine.
 
 ### 4. `func (e *Engine) Scan(c Chunk) []Issue`
 
@@ -62,7 +62,7 @@ A match is excluded when either the match itself or its signature is in `cfg.Con
    - Skip it if its signature is excluded (checked first, as in `scanner.py:645`), or if any `ExcludeEntropyPatterns` entry has `Pattern` matching the **line** and `PathPattern` matching the path, both unanchored (line scope and search semantics, `scanner.py:434-478`).
 4. **Within-chunk dedup**: identical `(Type, Detail, Match)` triples are reported once. Tartufo reports each occurrence; repeats in the same added block add noise without new information.
 
-Issues come back in a deterministic order: regex issues by rule name then position, then entropy issues by line then position.
+Issues come back in a deterministic order: regex issues by rule name then position, then entropy issues by line, then word, with a word's base64 candidates before its hex candidates (tartufo's order, so a hex run can follow a later base64 run in the same word).
 
 ### 5. Python-compatibility notes (doc comments plus tests, no emulation)
 
@@ -77,6 +77,8 @@ Issues come back in a deterministic order: regex issues by rule name then positi
 - Exclusions: raw-string signature, computed signature, entropy pattern requiring both line and path match, empty `path-pattern`, path exclusion short-circuiting both scans.
 - Regex: group-1 extraction, whole-match extraction, multi-group rejection at `New`, `PathPattern` filtering, matching across `\n`.
 - Engine with `Regex` or `Entropy` off.
+- Changing the caller's `Config` exclusions after `New` doesn't change `Scan` results.
+- Entropy order within a word: base64 candidates, then hex.
 - `go test -race` with a goroutine fan-out over one `*Engine`.
 
 ---
@@ -112,6 +114,7 @@ Issues come back in a deterministic order: regex issues by rule name then positi
 | `detect/signature_test.go` | Signature goldens |
 | `detect/engine_test.go` | Regex, entropy, exclusion, ordering, race tests |
 | `detect/testdata/*` | Python-generated golden signatures and entropy values |
+| `tartufo.toml` | gelato's own config, so a self-scan is clean: excludes `go.sum` and `detect/testdata/signatures.json` by path, and the signature golden above as a raw string |
 
 ---
 
