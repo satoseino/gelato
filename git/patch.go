@@ -16,8 +16,12 @@ type (
 
 	// FileChange is one file's added lines from a patch.
 	FileChange struct {
+		// Commit is the object ID from the diff-tree --stdin line before
+		// this change, or "" for a staged diff.
 		Commit string
-		Path   string
+		// Path is the new path, relative to the repository root.
+		Path string
+		// Lines are the added lines, without the leading "+" or "\n".
 		Lines  []string
 		Status Status
 	}
