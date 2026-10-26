@@ -74,7 +74,7 @@ Run it on `jarvis-registry` with its `tartufo.toml`. Record the commands, both t
 ## What does NOT change
 
 - No Go code changes beyond what release builds need; `main.version` already exists (spec 1).
-- No CI workflow for tests and lint, no Homebrew tap, no code signing.
+- No Homebrew tap, no code signing. The test-and-lint CI workflow (`.github/workflows/test-and-lint.yaml`) already exists and is unchanged.
 - No edits to `jarvis-registry` itself; its hook switch and the `\\.env\\.example$` pattern fix are done separately in that repository.
 
 ---
@@ -114,5 +114,4 @@ Unexplained entropy differences in the parity run would mean existing `exclude-s
 
 ## Out of scope / follow-up
 
-- A `test-and-lint` CI workflow running `make all` on pull requests.
 - Homebrew distribution. If added, use GoReleaser's `brews:` formula rather than `homebrew_casks:`: casks quarantine unsigned macOS binaries (see `jarvis-registry-cli/CLAUDE.md`, "Release and distribution").
