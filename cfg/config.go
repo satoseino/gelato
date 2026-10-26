@@ -5,6 +5,7 @@ package cfg
 import (
 	"errors"
 	"fmt"
+	"io"
 	"io/fs"
 	"maps"
 	"os"
@@ -153,12 +154,21 @@ func readTarget(repoDir string, explicit []fs.FileInfo) (l layer, found bool, er
 // readFile parses the `[tool.tartufo]` table of the TOML file at path. found
 // is false when the file has no such table.
 func readFile(path string) (l layer, info fs.FileInfo, found bool, err error) {
-	data, err := os.ReadFile(path)
+	f, err := os.Open(path)
 	if err != nil {
 		return layer{}, nil, false, fmt.Errorf("reading config: %s", err.Error())
 	}
 
-	info, err = os.Stat(path)
+	defer func() { _ = f.Close() }()
+
+	// Stat the open file so the identity used for explicit/target dedup is
+	// the file whose contents are parsed.
+	info, err = f.Stat()
+	if err != nil {
+		return layer{}, nil, false, fmt.Errorf("reading config: %s", err.Error())
+	}
+
+	data, err := io.ReadAll(f)
 	if err != nil {
 		return layer{}, nil, false, fmt.Errorf("reading config: %s", err.Error())
 	}
@@ -315,9 +325,8 @@ func parseEntropyPatterns(key string, value any) ([]EntropyExclusion, error) {
 			return nil, err
 		}
 
-		if exclusion.Reason, err = optionalString(at, entry, keyReason); err != nil {
-			return nil, err
-		}
+		// asTables has already checked that a present reason is a string.
+		exclusion.Reason, _ = entry[keyReason].(string)
 
 		exclusions = append(exclusions, exclusion)
 	}
