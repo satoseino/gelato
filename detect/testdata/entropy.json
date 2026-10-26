@@ -1,0 +1,50 @@
+[
+  {
+    "input": "",
+    "entropy": 0.0
+  },
+  {
+    "input": "a",
+    "entropy": 0.0
+  },
+  {
+    "input": "aaaaaaaaaaaaaaaaaaaa",
+    "entropy": 0.0
+  },
+  {
+    "input": "ab",
+    "entropy": 1.0
+  },
+  {
+    "input": "ZWxsbyB3b3JsZCBoZWxsbyB3b3JsZA",
+    "entropy": 3.41506101220307
+  },
+  {
+    "input": "hello world",
+    "entropy": 2.8453509366224368
+  },
+  {
+    "input": "0123456789abcdef",
+    "entropy": 4.0
+  },
+  {
+    "input": "deadbeefdeadbeefdeadbeef",
+    "entropy": 2.1556390622295662
+  },
+  {
+    "input": "İıſKİıſKİıſKİıſKİıſK",
+    "entropy": 2.0
+  },
+  {
+    "input": "aİbıcſdKaİbıcſdKaİbı",
+    "entropy": 2.9709505944546684
+  },
+  {
+    "input": "mississippi",
+    "entropy": 1.823067982273661
+  },
+  {
+    "input": "pässwört-beispiel",
+    "entropy": 3.4548223999466066
+  }
+]

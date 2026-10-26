@@ -1,0 +1,37 @@
+[
+  {
+    "match": "not-a-real-secret",
+    "path": "config/app.py",
+    "signature": "0e027678bd911189618fd0c11817c6900877b3933bcd54dea457f5e7029acebe"
+  },
+  {
+    "match": "",
+    "path": "README.md",
+    "signature": "166a73d660b5b39603460ada60d0100936e25efae4e2e5259411ca6b312b12c7"
+  },
+  {
+    "match": "placeholder-value",
+    "path": "",
+    "signature": "aa7017bc07174ca5ffbc82c4dba611878a4e2f77ab427da4ae296549c11a8d4c"
+  },
+  {
+    "match": "pässwört-beispiel",
+    "path": "dökümanlar/ayarlar.yaml",
+    "signature": "38b92d11e7736de8befefb0a4e5c23bf2a4e92122b897e873be45b32607eda30"
+  },
+  {
+    "match": "例のプレースホルダー",
+    "path": "設定/アプリ.toml",
+    "signature": "a6bcf952f06566c22793e67c4aeba061b66e80b2e0a364144c4e18b45dbb0482"
+  },
+  {
+    "match": "value with $$ inside",
+    "path": "a$$b.txt",
+    "signature": "75e4a8caf205aa55e8775d140aab0316c02730e9dd35c1d8a8071b49f852d03c"
+  },
+  {
+    "match": "emoji-🙂-value",
+    "path": "notes/🙂.md",
+    "signature": "3194647cc7b067ed1571fee063270b037a24c5b922dd447c6b6f1db584e6a7f5"
+  }
+]
