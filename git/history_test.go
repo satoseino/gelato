@@ -176,7 +176,13 @@ func TestCommitInfo(t *testing.T) {
 	repo.Commit("second")
 	second := head(repo, "HEAD")
 
-	infos, err := open(t, repo.Dir).CommitInfo(context.Background(), []string{first, second})
+	// A non-UTC committer keeps their offset.
+	t.Setenv("GIT_COMMITTER_DATE", "2020-01-01T09:30:00+05:30")
+	repo.Write("c.txt", "c\n")
+	repo.Commit("third")
+	third := head(repo, "HEAD")
+
+	infos, err := open(t, repo.Dir).CommitInfo(context.Background(), []string{first, second, third})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -184,8 +190,38 @@ func TestCommitInfo(t *testing.T) {
 	want := map[string]CommitInfo{
 		first:  {Hash: first, Time: "2020-01-01T00:00:00Z", Subject: "first subject"},
 		second: {Hash: second, Time: "2020-01-01T00:00:00Z", Subject: "second"},
+		third:  {Hash: third, Time: "2020-01-01T09:30:00+05:30", Subject: "third"},
 	}
 	if !reflect.DeepEqual(infos, want) {
 		t.Errorf("CommitInfo() = %v, want %v", infos, want)
+	}
+}
+
+// TestCommitTime checks that the time is formatted the same on every git
+// version: %cI prints a zero offset as "+00:00" before git 2.45.
+func TestCommitTime(t *testing.T) {
+	tests := []struct {
+		raw     string
+		want    string
+		wantErr bool
+	}{
+		{raw: "1577836800 +0000", want: "2020-01-01T00:00:00Z"},
+		{raw: "1577836800 -0000", want: "2020-01-01T00:00:00Z"},
+		{raw: "1577836800 +0530", want: "2020-01-01T05:30:00+05:30"},
+		{raw: "1577836800 -0800", want: "2019-12-31T16:00:00-08:00"},
+		{raw: "0 +1400", want: "1970-01-01T14:00:00+14:00"},
+		{raw: "1577836800", wantErr: true},
+		{raw: "x +0000", wantErr: true},
+		{raw: "0 0000", wantErr: true},
+		{raw: "0 +00:00", wantErr: true},
+		{raw: "0 +-100", wantErr: true},
+		{raw: "0 +0060", wantErr: true},
+	}
+
+	for _, tt := range tests {
+		got, err := commitTime(tt.raw)
+		if (err != nil) != tt.wantErr || got != tt.want {
+			t.Errorf("commitTime(%q) = %q, %v; want %q, error %t", tt.raw, got, err, tt.want, tt.wantErr)
+		}
 	}
 }
