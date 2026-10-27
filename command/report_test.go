@@ -4,7 +4,9 @@ import (
 	"bytes"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
+	"unicode/utf8"
 
 	"github.com/satoseino/gelato/detect"
 )
@@ -50,6 +52,31 @@ func TestReporterIssue(t *testing.T) {
 				Chunk: detect.Chunk{Path: "a.txt", Lines: []string{"MATCH"}},
 			},
 			meta: []field{{label: "Commit hash", value: "0123abcd"}, {label: "Branch", value: "main"}},
+		},
+		{
+			// The second occurrence falls inside the window, the third outside.
+			name: "long",
+			issue: detect.Issue{
+				Type: detect.EntropyIssue, Match: "MATCH", Path: "a.txt", Signature: "sig",
+				Chunk: detect.Chunk{Path: "a.txt", Lines: []string{
+					"short",
+					strings.Repeat("a", 300) + "MATCH" + strings.Repeat("b", 20) + "MATCH" +
+						strings.Repeat("c", 600) + "MATCH" + strings.Repeat("d", 10),
+				}},
+			},
+		},
+		{
+			name: "long-multiline",
+			issue: detect.Issue{
+				Type: detect.RegexIssue, Detail: "Multi-line rule", Match: "of\nmid\nthe", Path: "a.txt", Signature: "sig",
+				Chunk: detect.Chunk{Path: "a.txt", Lines: []string{
+					strings.Repeat("x", 600),
+					strings.Repeat("a", 600) + "of",
+					"mid",
+					"the" + strings.Repeat("b", 600),
+					"after",
+				}},
+			},
 		},
 	}
 
@@ -106,6 +133,39 @@ func TestReporterColor(t *testing.T) {
 				"+\x1b[93mthe\x1b[0m end\n" +
 				"~~~~~~~~~~~~~~~~~~~~~\n",
 		},
+		{
+			name: "long line",
+			issue: detect.Issue{
+				Type: detect.EntropyIssue, Match: "MATCH", Path: "a.txt", Signature: "sig",
+				Chunk: detect.Chunk{Path: "a.txt", Lines: []string{
+					strings.Repeat("a", 300) + "MATCH" + strings.Repeat("b", 300),
+				}},
+			},
+			want: "~~~~~~~~~~~~~~~~~~~~~\n" +
+				"\x1b[92mReason: High Entropy\x1b[0m\n" +
+				"\x1b[92mFilepath: a.txt\x1b[0m\n" +
+				"\x1b[92mSignature: sig\x1b[0m\n" +
+				"+…" + strings.Repeat("a", 80) + "\x1b[93mMATCH\x1b[0m" + strings.Repeat("b", 80) + "…\n" +
+				"~~~~~~~~~~~~~~~~~~~~~\n",
+		},
+		{
+			name: "long multiline",
+			issue: detect.Issue{
+				Type: detect.RegexIssue, Detail: "Rule", Match: "of\nmid\nthe", Path: "a.txt", Signature: "sig",
+				Chunk: detect.Chunk{Path: "a.txt", Lines: []string{
+					strings.Repeat("a", 600) + "of", "mid", "the" + strings.Repeat("b", 600),
+				}},
+			},
+			want: "~~~~~~~~~~~~~~~~~~~~~\n" +
+				"\x1b[92mReason: Regular Expression\x1b[0m\n" +
+				"\x1b[92mDetail: Rule\x1b[0m\n" +
+				"\x1b[92mFilepath: a.txt\x1b[0m\n" +
+				"\x1b[92mSignature: sig\x1b[0m\n" +
+				"+…" + strings.Repeat("a", 80) + "\x1b[93mof\x1b[0m\n" +
+				"+\x1b[93mmid\x1b[0m\n" +
+				"+\x1b[93mthe\x1b[0m" + strings.Repeat("b", 80) + "…\n" +
+				"~~~~~~~~~~~~~~~~~~~~~\n",
+		},
 	}
 
 	for _, tt := range tests {
@@ -117,6 +177,81 @@ func TestReporterColor(t *testing.T) {
 
 			if got := buf.String(); got != tt.want {
 				t.Errorf("got  %q\nwant %q", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestExcerpt(t *testing.T) {
+	long := strings.Repeat("a", 300) + "MATCH" + strings.Repeat("b", 300)
+	mid := strings.Index(long, "MATCH")
+	// "é" is two bytes and "日" three, so a byte-counted cut would differ.
+	multibyte := strings.Repeat("é", 300) + "MATCH" + strings.Repeat("日", 300)
+	multibyteMid := strings.Index(multibyte, "MATCH")
+	huge := strings.Repeat("M", 600)
+
+	tests := []struct {
+		name       string
+		line       string
+		want       string
+		start, end int
+	}{
+		{
+			name: "max length",
+			line: strings.Repeat("a", maxLineRunes), start: 0, end: 0,
+			want: strings.Repeat("a", maxLineRunes),
+		},
+		{
+			name: "empty anchor",
+			line: long, start: 0, end: 0,
+			want: strings.Repeat("a", 80) + "…",
+		},
+		{
+			name: "match at start",
+			line: "MATCH" + strings.Repeat("b", 600), start: 0, end: 5,
+			want: "MATCH" + strings.Repeat("b", 80) + "…",
+		},
+		{
+			name: "match in middle",
+			line: long, start: mid, end: mid + 5,
+			want: "…" + strings.Repeat("a", 80) + "MATCH" + strings.Repeat("b", 80) + "…",
+		},
+		{
+			name: "match at end",
+			line: strings.Repeat("a", 600) + "MATCH", start: 600, end: 605,
+			want: "…" + strings.Repeat("a", 80) + "MATCH",
+		},
+		{
+			name: "short context",
+			line: strings.Repeat("a", 10) + "MATCH" + strings.Repeat("b", 600), start: 10, end: 15,
+			want: strings.Repeat("a", 10) + "MATCH" + strings.Repeat("b", 80) + "…",
+		},
+		{
+			name: "match longer than max",
+			line: "a" + huge + "b", start: 1, end: 601,
+			want: "a" + huge + "b",
+		},
+		{
+			name: "match longer than max with context",
+			line: strings.Repeat("a", 100) + huge, start: 100, end: 700,
+			want: "…" + strings.Repeat("a", 80) + huge,
+		},
+		{
+			name: "multi-byte runes",
+			line: multibyte, start: multibyteMid, end: multibyteMid + 5,
+			want: "…" + strings.Repeat("é", 80) + "MATCH" + strings.Repeat("日", 80) + "…",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := excerpt(tt.line, tt.start, tt.end)
+			if got != tt.want {
+				t.Errorf("excerpt() = %q, want %q", got, tt.want)
+			}
+
+			if !utf8.ValidString(got) {
+				t.Errorf("excerpt() = %q is not valid UTF-8", got)
 			}
 		})
 	}
