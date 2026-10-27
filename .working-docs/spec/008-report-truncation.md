@@ -68,6 +68,7 @@ The comment on `reporter.issue` (`command/report.go:41-43`) currently says the b
   - `long-multiline.txt`: a multi-line match whose first and last lines are long, plus a long chunk line outside the match.
 
   Build the long inputs with `strings.Repeat` of a filler in the test. The expected files hold the windowed output, which is short.
+- **Multi-line line boundaries.** A table test for `excerpts` with matches that start at, end at, or both start and end at a `"\n"`, next to long lines. A line the match only touches must keep that edge, or the windowed body loses the match.
 - **Color.** Add one case to `TestReporterColor` (`command/report_test.go:75`) with a long line. It checks that `…` markers sit outside the escape sequences and only the match sits between `\x1b[93m` and `\x1b[0m`.
 
 ---
