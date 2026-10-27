@@ -251,10 +251,12 @@ func TestScanRepoPath(t *testing.T) {
 	}
 }
 
-// TestScanDeterministic checks that output is byte-identical across runs on
-// a history long enough to be split into several batches.
+// TestScanDeterministic checks that output is byte-identical across runs and
+// across batch counts, including ones that don't divide the history evenly,
+// and that a merge's side-branch secret stays attributed to the side commit
+// wherever the batch boundaries fall.
 func TestScanDeterministic(t *testing.T) {
-	defer runtime.GOMAXPROCS(runtime.GOMAXPROCS(4))
+	defer runtime.GOMAXPROCS(runtime.GOMAXPROCS(0))
 
 	repo := gittest.New(t)
 
@@ -278,23 +280,36 @@ func TestScanDeterministic(t *testing.T) {
 		}
 	}
 
+	repo.Git("checkout", "--quiet", "-b", "side", "HEAD~20")
+	repo.Write("side.py", "aws_access_key_id = "+keyID+"\n")
+	repo.Commit("side")
+	side := rev(repo, "HEAD")
+	repo.Git("checkout", "--quiet", "main")
+	repo.Git("merge", "--quiet", "--no-edit", "side")
+
+	runtime.GOMAXPROCS(1)
+
 	first, err := scan(t, repo.Dir, "", &Globals{})
 	assertFindings(t, err)
 
-	if want := fmt.Sprintf("Found %d issue(s).\n", commits+1); !strings.HasSuffix(first, want) {
+	if want := fmt.Sprintf("Found %d issue(s).\n", commits+2); !strings.HasSuffix(first, want) {
 		t.Fatalf("output ends %q, want %q", first[max(0, len(first)-40):], want)
 	}
 
-	if want := "Filepath: config.py\nSignature: " + detect.Signature(keyID, "config.py") + "\nCommit hash: " + oldest + "\n"; !strings.Contains(first, want) {
-		t.Errorf("output:\n%s\nwant the key attributed to the first commit %s", first, oldest)
+	for path, id := range map[string]string{"config.py": oldest, "side.py": side} {
+		if want := "Filepath: " + path + "\nSignature: " + detect.Signature(keyID, path) + "\nCommit hash: " + id + "\n"; !strings.Contains(first, want) {
+			t.Errorf("output:\n%s\nwant the key in %s attributed to %s", first, path, id)
+		}
 	}
 
-	for range 5 {
+	for _, procs := range []int{4, 4, 7, 32} {
+		runtime.GOMAXPROCS(procs)
+
 		again, err := scan(t, repo.Dir, "", &Globals{})
 		assertFindings(t, err)
 
 		if again != first {
-			t.Fatalf("output differs between runs:\n%s\nvs\n%s", first, again)
+			t.Fatalf("output with GOMAXPROCS %d differs from GOMAXPROCS 1:\n%s\nvs\n%s", procs, again, first)
 		}
 	}
 }
