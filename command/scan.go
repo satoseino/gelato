@@ -3,6 +3,7 @@ package command
 import (
 	"context"
 	"errors"
+	"fmt"
 	"io"
 	"runtime"
 	"sync"
@@ -129,6 +130,13 @@ func scanHistory(ctx context.Context, repo *git.Repo, e *detect.Engine, commits 
 
 		wg.Go(func() {
 			for fc, err := range repo.Patches(ctx, batch) {
+				// Defaulting to index 0 would attribute the change to the
+				// newest commit and dedup it at the wrong place.
+				k, ok := index[fc.Commit]
+				if err == nil && !ok {
+					err = fmt.Errorf("git diff-tree printed %s for unknown commit %q", fc.Path, fc.Commit)
+				}
+
 				if err != nil {
 					errs[b] = err
 
@@ -138,7 +146,7 @@ func scanHistory(ctx context.Context, repo *git.Repo, e *detect.Engine, commits 
 				}
 
 				for _, s := range p.scan(fc) {
-					slots[b] = append(slots[b], commitSlot{commit: index[fc.Commit], issues: s})
+					slots[b] = append(slots[b], commitSlot{commit: k, issues: s})
 				}
 			}
 		})
