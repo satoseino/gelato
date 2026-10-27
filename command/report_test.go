@@ -257,6 +257,44 @@ func TestExcerpt(t *testing.T) {
 	}
 }
 
+// TestExcerptsLineBoundary pins the multi-line anchoring when the match
+// starts or ends at a "\n": the line the match only touches must keep that
+// edge, or the windowed body would lose the match and its highlight.
+func TestExcerptsLineBoundary(t *testing.T) {
+	lines := []string{strings.Repeat("a", 600) + "X", "mid", "Y" + strings.Repeat("b", 600)}
+	// A segment anchor keeps contextRunes beside the segment; an empty anchor
+	// at the line's edge keeps contextRunes including the edge rune.
+	headSegment := "…" + strings.Repeat("a", 80) + "X"
+	tailSegment := "Y" + strings.Repeat("b", 80) + "…"
+	headEdge := "…" + strings.Repeat("a", 79) + "X"
+	tailEdge := "Y" + strings.Repeat("b", 79) + "…"
+	untouched := strings.Repeat("a", 80) + "…"
+
+	tests := []struct {
+		name  string
+		match string
+		want  []string
+	}{
+		{name: "inside lines", match: "X\nmid\nY", want: []string{headSegment, "mid", tailSegment}},
+		{name: "starts at newline", match: "\nmid", want: []string{headEdge, "mid", tailEdge}},
+		{name: "ends at newline", match: "mid\n", want: []string{untouched, "mid", tailEdge}},
+		{name: "both at newline", match: "\nmid\n", want: []string{headEdge, "mid", tailEdge}},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := excerpts(detect.Issue{Match: tt.match, Chunk: detect.Chunk{Lines: lines}})
+			if strings.Join(got, "\n") != strings.Join(tt.want, "\n") {
+				t.Errorf("excerpts() = %q, want %q", got, tt.want)
+			}
+
+			if !strings.Contains(strings.Join(got, "\n"), tt.match) {
+				t.Errorf("excerpts() = %q lost the match %q", got, tt.match)
+			}
+		})
+	}
+}
+
 func TestReporterSummary(t *testing.T) {
 	tests := []struct {
 		want string
