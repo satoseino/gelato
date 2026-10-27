@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/satoseino/gelato/command"
+	"github.com/satoseino/gelato/internal/gittest"
 )
 
 type (
@@ -85,12 +86,6 @@ func TestRun(t *testing.T) {
 			wantStderr: "gelato: error: repo/tartufo.toml: exclude-signatures[0].note: unknown key\n",
 		},
 		{
-			name:       "pre-commit not implemented",
-			args:       []string{"pre-commit"},
-			wantCode:   2,
-			wantStderr: "gelato: error: pre-commit: not implemented\n",
-		},
-		{
 			name:       "scan not implemented",
 			args:       []string{"scan"},
 			wantCode:   2,
@@ -150,5 +145,23 @@ func TestExecuteFindings(t *testing.T) {
 
 	if stdout.Len() != 0 || stderr.Len() != 0 {
 		t.Errorf("unexpected output: stdout %q, stderr %q", stdout.String(), stderr.String())
+	}
+}
+
+// TestRunPreCommit checks that the pre-commit report goes to run's stdout.
+func TestRunPreCommit(t *testing.T) {
+	repo := gittest.New(t)
+	repo.Write("a.txt", "one\n")
+	repo.Git("add", "a.txt")
+	t.Chdir(repo.Dir)
+
+	var stdout, stderr bytes.Buffer
+
+	if code := run([]string{"pre-commit", "--no-color"}, &stdout, &stderr); code != 0 {
+		t.Errorf("exit code = %d, want 0; stderr %q", code, stderr.String())
+	}
+
+	if want := "All clear. No secrets detected.\n"; stdout.String() != want {
+		t.Errorf("stdout = %q, want %q", stdout.String(), want)
 	}
 }

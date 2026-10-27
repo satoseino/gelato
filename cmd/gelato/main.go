@@ -14,7 +14,7 @@ import (
 
 type (
 	// cli is the root command line.
-	cli struct { //nolint:govet // fieldalignment: field order is the order kong prints in --help.
+	cli struct {
 		PreCommit command.PreCommit `cmd:"" help:"Scan lines added in staged changes." name:"pre-commit"`
 		Scan      command.Scan      `cmd:"" help:"Scan lines added across the repository's history." name:"scan"`
 
@@ -38,7 +38,10 @@ func main() {
 func run(args []string, stdout, stderr io.Writer) int {
 	var root cli
 
-	return execute(&root, args, stdout, stderr, kong.Bind(&root.Globals))
+	return execute(&root, args, stdout, stderr,
+		kong.Bind(&root.Globals),
+		kong.BindTo(stdout, (*io.Writer)(nil)),
+	)
 }
 
 // execute parses args into root, runs the selected command, and returns the

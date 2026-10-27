@@ -1,0 +1,10 @@
+~~~~~~~~~~~~~~~~~~~~~
+Reason: Regular Expression
+Detail: Multi-line rule
+Filepath: a.txt
+Signature: sig
++before
++start of
++the match
++after
+~~~~~~~~~~~~~~~~~~~~~
