@@ -1,0 +1,8 @@
+~~~~~~~~~~~~~~~~~~~~~
+Reason: Regular Expression
+Detail: AWS access key ID
+Filepath: keys/{{.KeyID}}.txt
+Signature: {{sig .KeyID (printf "keys/%s.txt" .KeyID)}}
++keys/{{.KeyID}}.txt
+~~~~~~~~~~~~~~~~~~~~~
+Found 1 issue(s).

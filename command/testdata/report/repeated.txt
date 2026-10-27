@@ -1,0 +1,7 @@
+~~~~~~~~~~~~~~~~~~~~~
+Reason: High Entropy
+Filepath: a.txt
+Signature: sig
++MATCH one
++MATCH two
+~~~~~~~~~~~~~~~~~~~~~

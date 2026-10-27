@@ -109,6 +109,13 @@ linters:
         linters:
           - gosec
         text: 'G204: Subprocess launched with'
+      # The real-hook test builds the gelato binary into a temp dir and
+      # installs a hook that runs it, which git can only run if it is
+      # executable.
+      - path: ^command/precommit_test\.go$
+        linters:
+          - gosec
+        text: 'G204: Subprocess launched with|G302: Expect file permissions'
 issues:
   max-issues-per-linter: 0
   max-same-issues: 0

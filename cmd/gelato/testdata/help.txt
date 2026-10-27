@@ -6,6 +6,7 @@ Flags:
   -h, --help             Show context-sensitive help.
       --config=CONFIG    Read configuration from this file. Repeatable; list
                          values are concatenated in order.
+      --no-color         Disable colored output.
   -V, --version          Print the version and exit.
 
 Commands:

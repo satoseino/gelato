@@ -1,0 +1,9 @@
+~~~~~~~~~~~~~~~~~~~~~
+Reason: Regular Expression
+Detail: Example rule
+Filepath: a.txt
+Signature: sig
+Commit hash: 0123abcd
+Branch: main
++MATCH
+~~~~~~~~~~~~~~~~~~~~~

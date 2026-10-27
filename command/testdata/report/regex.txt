@@ -1,0 +1,7 @@
+~~~~~~~~~~~~~~~~~~~~~
+Reason: Regular Expression
+Detail: Example rule
+Filepath: dir/a.txt
+Signature: sig
++two MATCH two
+~~~~~~~~~~~~~~~~~~~~~
