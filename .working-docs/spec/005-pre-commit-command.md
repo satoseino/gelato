@@ -54,7 +54,7 @@ End-to-end, using `internal/gittest` (spec 4) and fragment-built secrets (spec 3
 - Only added lines count: a secret on an unchanged or removed line is not reported.
 - An unborn branch and a staged rename.
 - Deterministic output: two runs over a repository with many staged files produce byte-identical output.
-- **Real hook:** `TestMain` builds the binary into a temp dir; the test installs a `.git/hooks/pre-commit` that runs `gelato pre-commit`, then runs `git commit -a` (temporary `GIT_INDEX_FILE`) with a modified tracked file containing a secret, and asserts the commit is rejected and the finding is printed.
+- **Real hook:** the test builds the binary into its own `t.TempDir()` (not in `TestMain`, so a failed build fails only this test), installs a `.git/hooks/pre-commit` that runs `gelato pre-commit`, then runs `git commit -a` (temporary `GIT_INDEX_FILE`) with a modified tracked file containing a secret, and asserts the commit is rejected and the finding is printed.
 - Color: a forced-color reporter test checks the escape sequences around the match.
 
 Add the scoped `.golangci.yaml` exclusion for `G204` on `command/precommit_test.go` (building and running the gelato binary for the real-hook test), with a comment explaining why, as in spec 4.
