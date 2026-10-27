@@ -16,6 +16,12 @@ type PreCommit struct {
 	cfg cfg.Config
 }
 
+// Help returns the guide to reading and resolving a finding that kong prints
+// under pre-commit --help.
+func (*PreCommit) Help() string {
+	return findingHelp(false)
+}
+
 // AfterApply loads the configuration for the repository in the current
 // directory and sets up the report written to w.
 func (c *PreCommit) AfterApply(g *Globals, w io.Writer) error {

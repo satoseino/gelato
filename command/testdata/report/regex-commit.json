@@ -1,0 +1,17 @@
+{
+  "found_issues": [
+    {
+      "file_path": "dir/a.txt",
+      "matched_string": "MATCH",
+      "signature": "sig",
+      "issue_type": "Regular Expression",
+      "issue_detail": "Example rule",
+      "lines": [
+        "two MATCH two"
+      ],
+      "commit_hash": "0123abcd",
+      "commit_time": "2020-01-01T00:00:00Z",
+      "commit_message": "add key"
+    }
+  ]
+}

@@ -180,6 +180,40 @@ func TestPreCommitFindings(t *testing.T) {
 	}
 }
 
+func TestPreCommitJSON(t *testing.T) {
+	t.Run("clean", func(t *testing.T) {
+		repo := gittest.New(t)
+		repo.Write("a.txt", "one\n")
+		repo.Git("add", "a.txt")
+
+		out, err := preCommit(t, repo.Dir, &Globals{OutputFormat: formatJSON})
+		if err != nil {
+			t.Fatalf("got error %v; output:\n%s", err, out)
+		}
+
+		if want := "{\n  \"found_issues\": []\n}\n"; out != want {
+			t.Errorf("output:\n%s\nwant:\n%s", out, want)
+		}
+	})
+
+	t.Run("findings", func(t *testing.T) {
+		repo := gittest.New(t)
+		repo.Write("README", "readme\n")
+		repo.Commit("init")
+		repo.Write("config.py", "import os\naws_access_key_id = "+keyID+"\n")
+		repo.Write("notes.txt", "value: "+highEntropy+"\n")
+		repo.Git("add", "--all")
+
+		out, err := preCommit(t, repo.Dir, &Globals{OutputFormat: formatJSON})
+		assertFindings(t, err)
+
+		want := render(t, filepath.Join("precommit", "findings.json.tmpl"), fixture{KeyID: keyID, Entropy: highEntropy})
+		if out != want {
+			t.Errorf("output:\n%s\nwant:\n%s", out, want)
+		}
+	})
+}
+
 func TestPreCommitExcluded(t *testing.T) {
 	tests := []struct {
 		name   string

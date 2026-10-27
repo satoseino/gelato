@@ -14,7 +14,7 @@ import (
 
 type (
 	// cli is the root command line.
-	cli struct {
+	cli struct { //nolint:govet // fieldalignment: kong lists commands and flags in field order.
 		PreCommit command.PreCommit `cmd:"" help:"Scan lines added in staged changes." name:"pre-commit"`
 		Scan      command.Scan      `cmd:"" help:"Scan lines added across the repository's history." name:"scan"`
 

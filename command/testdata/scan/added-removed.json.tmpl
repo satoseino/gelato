@@ -1,0 +1,30 @@
+{
+  "found_issues": [
+    {
+      "file_path": "config.py",
+      "matched_string": "{{.KeyID}}",
+      "signature": "{{sig .KeyID "config.py"}}",
+      "issue_type": "Regular Expression",
+      "issue_detail": "AWS access key ID",
+      "lines": [
+        "aws_access_key_id = {{.KeyID}}"
+      ],
+      "commit_hash": "{{.Commit}}",
+      "commit_time": "2020-01-01T00:00:00Z",
+      "commit_message": "add key"
+    },
+    {
+      "file_path": "notes.txt",
+      "matched_string": "{{.Entropy}}",
+      "signature": "{{sig .Entropy "notes.txt"}}",
+      "issue_type": "High Entropy",
+      "issue_detail": null,
+      "lines": [
+        "value: {{.Entropy}}"
+      ],
+      "commit_hash": "{{.Commit}}",
+      "commit_time": "2020-01-01T00:00:00Z",
+      "commit_message": "add key"
+    }
+  ]
+}

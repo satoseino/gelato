@@ -3,11 +3,15 @@ Usage: gelato <command> [flags]
 Scan a git repository for secrets.
 
 Flags:
-  -h, --help             Show context-sensitive help.
-      --config=CONFIG    Read configuration from this file. Repeatable; list
-                         values are concatenated in order.
-      --no-color         Disable colored output.
-  -V, --version          Print the version and exit.
+  -h, --help                    Show context-sensitive help.
+      --config=CONFIG           Read configuration from this file. Repeatable;
+                                list values are concatenated in order.
+      --no-color                Disable colored output.
+      --output-format="text"    Report format: "text" for people, or "json" for
+                                scripts and AI agents (exactly one JSON document
+                                on stdout). See "gelato <command> --help" for
+                                the JSON fields and how to resolve a finding.
+  -V, --version                 Print the version and exit.
 
 Commands:
   pre-commit [flags]

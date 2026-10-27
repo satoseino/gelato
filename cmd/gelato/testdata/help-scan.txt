@@ -1,0 +1,63 @@
+Usage: gelato scan [<repo-path>] [flags]
+
+Scan lines added across the repository's history.
+
+Exit codes: 0 when nothing is found, 1 when secrets are found, and 2 for any
+other error, which is printed on stderr.
+
+With --output-format=json, stdout is exactly one JSON document, {"found_issues":
+[...]}, even when nothing is found. On exit code 2, stdout is empty. Each issue
+has these keys:
+
+  - file_path: the repository-relative path the string was added to.
+  - matched_string: the exact flagged string, which may span lines.
+  - signature: the finding's ID for exclude-signatures, computed from
+    matched_string and file_path only.
+  - issue_type: "Regular Expression" or "High Entropy".
+  - issue_detail: the regex rule's name, or null for High Entropy.
+  - lines: the added lines containing matched_string (every added line of the
+    change when it spans lines). A line longer than 500 characters is cut to 80
+    characters on each side of the match, and "…" marks each cut.
+  - commit_hash, commit_time, commit_message: the oldest commit that added the
+    finding.
+
+To resolve a finding, first decide whether matched_string is a real secret.
+
+If it is, remove it from the file and rotate it at its issuer. Removing it from
+the file doesn't remove it from the repository's history.
+
+If it isn't, add one entry under [tool.tartufo] in tartufo.toml (or
+pyproject.toml), with a reason. The default choice suppresses exactly this
+string in this file:
+
+    exclude-signatures = [{signature = "<signature>", reason = "<why this is not a secret>"}]
+
+For files that are entirely generated or test data, skip every finding in files
+whose path the regex matches from the start of file_path:
+
+    exclude-path-patterns = [{path-pattern = '<regex>', reason = "<why>"}]
+
+For High Entropy issues only, suppress every high-entropy string on a line that
+pattern matches anywhere, in files whose path path-pattern matches anywhere;
+path-pattern is optional:
+
+    exclude-entropy-patterns = [{pattern = '<regex>', path-pattern = '<regex>', reason = "<why>"}]
+
+Prefer the narrowest entry. Never put matched_string itself in the config:
+exclude-signatures also accepts the raw string, and that would commit the
+secret.
+
+Arguments:
+  [<repo-path>]    Repository to scan. Defaults to repo-path from --config,
+                   else the current directory.
+
+Flags:
+  -h, --help                    Show context-sensitive help.
+      --config=CONFIG           Read configuration from this file. Repeatable;
+                                list values are concatenated in order.
+      --no-color                Disable colored output.
+      --output-format="text"    Report format: "text" for people, or "json" for
+                                scripts and AI agents (exactly one JSON document
+                                on stdout). See "gelato <command> --help" for
+                                the JSON fields and how to resolve a finding.
+  -V, --version                 Print the version and exit.
