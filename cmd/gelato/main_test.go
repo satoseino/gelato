@@ -85,12 +85,6 @@ func TestRun(t *testing.T) {
 			wantCode:   2,
 			wantStderr: "gelato: error: repo/tartufo.toml: exclude-signatures[0].note: unknown key\n",
 		},
-		{
-			name:       "scan not implemented",
-			args:       []string{"scan"},
-			wantCode:   2,
-			wantStderr: "gelato: error: scan: not implemented\n",
-		},
 	}
 
 	for _, tt := range tests {
@@ -158,6 +152,23 @@ func TestRunPreCommit(t *testing.T) {
 	var stdout, stderr bytes.Buffer
 
 	if code := run([]string{"pre-commit", "--no-color"}, &stdout, &stderr); code != 0 {
+		t.Errorf("exit code = %d, want 0; stderr %q", code, stderr.String())
+	}
+
+	if want := "All clear. No secrets detected.\n"; stdout.String() != want {
+		t.Errorf("stdout = %q, want %q", stdout.String(), want)
+	}
+}
+
+// TestRunScan checks that the scan report goes to run's stdout.
+func TestRunScan(t *testing.T) {
+	repo := gittest.New(t)
+	repo.Write("a.txt", "one\n")
+	repo.Commit("init")
+
+	var stdout, stderr bytes.Buffer
+
+	if code := run([]string{"scan", "--no-color", repo.Dir}, &stdout, &stderr); code != 0 {
 		t.Errorf("exit code = %d, want 0; stderr %q", code, stderr.String())
 	}
 
