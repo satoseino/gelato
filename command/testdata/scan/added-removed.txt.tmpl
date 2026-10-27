@@ -1,0 +1,20 @@
+~~~~~~~~~~~~~~~~~~~~~
+Reason: Regular Expression
+Detail: AWS access key ID
+Filepath: config.py
+Signature: {{sig .KeyID "config.py"}}
+Commit hash: {{.Commit}}
+Commit time: 2020-01-01T00:00:00Z
+Commit message: add key
++aws_access_key_id = {{.KeyID}}
+~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~
+Reason: High Entropy
+Filepath: notes.txt
+Signature: {{sig .Entropy "notes.txt"}}
+Commit hash: {{.Commit}}
+Commit time: 2020-01-01T00:00:00Z
+Commit message: add key
++value: {{.Entropy}}
+~~~~~~~~~~~~~~~~~~~~~
+Found 2 issue(s).

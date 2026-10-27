@@ -3,8 +3,6 @@ package command
 import (
 	"context"
 	"io"
-	"runtime"
-	"sync"
 
 	"github.com/satoseino/gelato/cfg"
 	"github.com/satoseino/gelato/detect"
@@ -47,17 +45,27 @@ func (c *PreCommit) Run() error {
 		return err
 	}
 
-	var chunks []detect.Chunk
+	p := newPool(engine)
+
+	var slots []*[]detect.Issue
 
 	for fc, err := range repo.Staged(ctx) {
 		if err != nil {
+			p.wait()
+
 			return err
 		}
 
-		chunks = append(chunks, chunksOf(fc)...)
+		slots = append(slots, p.scan(fc)...)
 	}
 
-	issues := scanChunks(engine, chunks)
+	p.wait()
+
+	var issues []detect.Issue
+	for _, s := range slots {
+		issues = append(issues, *s...)
+	}
+
 	for _, i := range issues {
 		if err := c.out.issue(i, nil); err != nil {
 			return err
@@ -73,52 +81,4 @@ func (c *PreCommit) Run() error {
 	}
 
 	return nil
-}
-
-// chunksOf returns the chunks to scan for fc: its added lines, and for a new
-// path the path itself, so that secrets in file names are caught. The path
-// is a chunk of its own so that its issues show only the path.
-func chunksOf(fc git.FileChange) []detect.Chunk {
-	var chunks []detect.Chunk
-
-	if len(fc.Lines) > 0 {
-		chunks = append(chunks, detect.Chunk{Path: fc.Path, Lines: fc.Lines})
-	}
-
-	if fc.Status == git.Added || fc.Status == git.Renamed {
-		chunks = append(chunks, detect.Chunk{Path: fc.Path, Lines: []string{fc.Path}})
-	}
-
-	return chunks
-}
-
-// scanChunks scans chunks on runtime.GOMAXPROCS(0) goroutines and returns
-// their issues in chunk order, so output doesn't depend on scheduling.
-func scanChunks(e *detect.Engine, chunks []detect.Chunk) []detect.Issue {
-	results := make([][]detect.Issue, len(chunks))
-	seqs := make(chan int)
-
-	var wg sync.WaitGroup
-
-	for range runtime.GOMAXPROCS(0) {
-		wg.Go(func() {
-			for seq := range seqs {
-				results[seq] = e.Scan(chunks[seq])
-			}
-		})
-	}
-
-	for seq := range chunks {
-		seqs <- seq
-	}
-
-	close(seqs)
-	wg.Wait()
-
-	var issues []detect.Issue
-	for _, r := range results {
-		issues = append(issues, r...)
-	}
-
-	return issues
 }

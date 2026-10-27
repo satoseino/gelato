@@ -102,19 +102,27 @@ func preCommit(t *testing.T, dir string, g *Globals) (string, error) {
 }
 
 // golden renders testdata/precommit/<name>.txt.tmpl with the fixture
-// secrets. Its sig function computes a finding's signature.
+// secrets.
 func golden(t *testing.T, name string) string {
 	t.Helper()
 
-	tmpl, err := template.New(name + ".txt.tmpl").
+	return render(t, filepath.Join("precommit", name+".txt.tmpl"), fixture{KeyID: keyID, Entropy: highEntropy})
+}
+
+// render executes the template at path, relative to testdata/, with data. Its
+// sig function computes a finding's signature.
+func render(t *testing.T, path string, data any) string {
+	t.Helper()
+
+	tmpl, err := template.New(filepath.Base(path)).
 		Funcs(template.FuncMap{"sig": detect.Signature}).
-		ParseFiles(filepath.Join(testdata, "precommit", name+".txt.tmpl"))
+		ParseFiles(filepath.Join(testdata, path))
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	var b strings.Builder
-	if err := tmpl.Execute(&b, fixture{KeyID: keyID, Entropy: highEntropy}); err != nil {
+	if err := tmpl.Execute(&b, data); err != nil {
 		t.Fatal(err)
 	}
 
