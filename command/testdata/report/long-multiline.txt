@@ -1,0 +1,11 @@
+~~~~~~~~~~~~~~~~~~~~~
+Reason: Regular Expression
+Detail: Multi-line rule
+Filepath: a.txt
+Signature: sig
++xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx…
++…aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaof
++mid
++thebbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb…
++after
+~~~~~~~~~~~~~~~~~~~~~
