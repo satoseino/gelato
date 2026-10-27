@@ -105,6 +105,21 @@ func (r *Repo) Write(path, content string) {
 	}
 }
 
+// Clone clones the repository through a file:// URL, so that options such as
+// --depth apply, into a new temporary directory, passing args to git clone.
+func (r *Repo) Clone(args ...string) *Repo {
+	r.t.Helper()
+
+	dir, err := filepath.EvalSymlinks(r.t.TempDir())
+	if err != nil {
+		r.t.Fatal(err)
+	}
+
+	r.Git(append(append([]string{"clone", "--quiet"}, args...), "file://"+filepath.ToSlash(r.Dir), dir)...)
+
+	return &Repo{t: r.t, Dir: dir}
+}
+
 // Commit stages every change in the working tree and commits it with
 // message.
 func (r *Repo) Commit(message string) {
