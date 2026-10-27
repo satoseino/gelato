@@ -37,50 +37,41 @@ var (
 	// highEntropy is a high-entropy base64 string that matches no rule.
 	highEntropy = alnum[:40]
 
-	// gelatoBin is the gelato binary built by TestMain.
-	gelatoBin string
-
 	// testdata is the absolute path of testdata/, set by TestMain because
 	// the tests change directory into their repositories.
 	testdata string
 )
 
 func TestMain(m *testing.M) {
-	os.Exit(testMain(m))
-}
-
-func testMain(m *testing.M) int {
 	var err error
 
 	testdata, err = filepath.Abs("testdata")
 	if err != nil {
 		_, _ = fmt.Fprintln(os.Stderr, err)
 
-		return 2
+		os.Exit(2)
 	}
 
-	dir, err := os.MkdirTemp("", "gelato-bin-")
-	if err != nil {
-		_, _ = fmt.Fprintln(os.Stderr, err)
+	os.Exit(m.Run())
+}
 
-		return 2
-	}
+// buildGelato builds the gelato binary into a temporary directory and
+// returns its path. Only the real-hook test needs it, so a failed build
+// fails that test alone.
+func buildGelato(t *testing.T) string {
+	t.Helper()
 
-	defer func() { _ = os.RemoveAll(dir) }()
+	bin := filepath.Join(t.TempDir(), "gelato")
 
-	gelatoBin = filepath.Join(dir, "gelato")
-
-	build := exec.Command("go", "build", "-o", gelatoBin, "github.com/satoseino/gelato/cmd/gelato")
+	build := exec.Command("go", "build", "-o", bin, "github.com/satoseino/gelato/cmd/gelato")
 
 	build.Env = append(os.Environ(), "CGO_ENABLED=0")
 
 	if out, err := build.CombinedOutput(); err != nil {
-		_, _ = fmt.Fprintf(os.Stderr, "building gelato: %v\n%s", err, out)
-
-		return 2
+		t.Fatalf("building gelato: %v\n%s", err, out)
 	}
 
-	return m.Run()
+	return bin
 }
 
 func runeRange(lo, hi rune) string {
@@ -315,6 +306,8 @@ func TestPreCommitHook(t *testing.T) {
 	if runtime.GOOS == "windows" {
 		t.Skip("the hook is a shell script")
 	}
+
+	gelatoBin := buildGelato(t)
 
 	repo := gittest.New(t)
 	repo.Write("config.py", "import os\n")
