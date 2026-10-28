@@ -32,7 +32,7 @@ Go binaries statically include their dependencies (kong and go-toml: MIT; `golan
 
 ### 4. `.github/workflows/release.yaml`
 
-`permissions: contents: write`. On `push` of tags `v*`: `actions/checkout@v4` (`fetch-depth: 0`, needed for GoReleaser's changelog), `actions/setup-go@v5` with `go-version-file: go.mod`, then `goreleaser/goreleaser-action@v7` (`distribution: goreleaser`, `version: "~> v2"` so a future v3 without `brews` isn't picked up, `args: release --clean`) with `env` `GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}` and `HOMEBREW_TAP_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}`. `GITHUB_TOKEN` can't write outside this repository, so the tap push uses `HOMEBREW_TAP_TOKEN`, a repository secret (already set) holding a fine-grained PAT limited to Contents read/write on `satoseino/homebrew-tap`. Same action versions as `jarvis-registry-cli/.github/workflows/release.yaml`.
+`permissions: contents: write`. On `push` of tags `v*`: `actions/checkout@v4` (`fetch-depth: 0`, needed for GoReleaser's changelog), `actions/setup-go@v5` with `go-version: "1.26.x"` (not `go-version-file: go.mod`: setup-go installs the `go 1.26.0` directive as that exact version, which would ship a standard library without later security fixes), then `goreleaser/goreleaser-action@v7` (`distribution: goreleaser`, `version: "~> v2"` so a future v3 without `brews` isn't picked up, `args: release --clean`) with `env` `GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}` and `HOMEBREW_TAP_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}`. `GITHUB_TOKEN` can't write outside this repository, so the tap push uses `HOMEBREW_TAP_TOKEN`, a repository secret (already set) holding a fine-grained PAT limited to Contents read/write on `satoseino/homebrew-tap`. Same action versions as `jarvis-registry-cli/.github/workflows/release.yaml`.
 
 ### 5. `.pre-commit-hooks.yaml`
 
@@ -46,7 +46,7 @@ Go binaries statically include their dependencies (kong and go-toml: MIT; `golan
   pass_filenames: false
 ```
 
-pre-commit builds `language: golang` hooks with `go install ./...` from the hook repository, downloading a Go toolchain into its own environment when needed (visible in pre-commit issue #3512's traceback: `golangenv-default/.go/bin/go install ./...`). The build is cached per hook `rev`, not per Python version, which removes tartufo's breakage on Python upgrades. gelato has no cgo dependencies (`make build` enforces this with `CGO_ENABLED=0`), so pre-commit's default cgo setting doesn't matter.
+pre-commit builds `language: golang` hooks with `go install ./...` from the hook repository, downloading a Go toolchain into its own environment when needed (visible in pre-commit issue #3512's traceback: `golangenv-default/.go/bin/go install ./...`). The build is cached per hook `rev`, not per Python version, which removes tartufo's breakage on Python upgrades. gelato has no cgo dependencies (`make build` enforces this with `CGO_ENABLED=0`), so pre-commit's default cgo setting doesn't matter. `go install` passes no `-ldflags`, so `main.version` stays `"dev"`; in that case `--version` falls back to `debug.ReadBuildInfo().Main.Version` (ignoring `(devel)`). Under pre-commit that is a pseudo-version naming the `rev`'s commit, e.g. `v0.0.0-20261028030605-f9ad448604c5+dirty`, not the tag: pre-commit fetches the `rev` with `--depth=1` and no tags, and its environment directory inside the clone makes the worktree dirty.
 
 ### 6. `README.md`
 
@@ -70,7 +70,7 @@ pre-commit builds `language: golang` hooks with `go install ./...` from the hook
 
 ## What does NOT change
 
-- No Go code changes beyond what release builds need; `main.version` already exists (spec 1).
+- No Go code changes beyond what release builds need and the `--version` build-info fallback (section 5); `main.version` already exists (spec 1).
 - No code signing. The test-and-lint CI workflow (`.github/workflows/test-and-lint.yaml`) already exists and is unchanged.
 - No edits to `jarvis-registry` itself; its hook switch and the `\\.env\\.example$` pattern fix are done separately in that repository.
 
