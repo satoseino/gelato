@@ -22,7 +22,9 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version-file: go.mod
+          # go.mod's "go 1.26.0" would install exactly 1.26.0; take the latest
+          # 1.26 patch release so binaries ship the current standard library.
+          go-version: "1.26.x"
 
       - name: Run GoReleaser
         uses: goreleaser/goreleaser-action@v7
