@@ -79,7 +79,8 @@ const (
 )
 
 // newReporter returns a reporter writing to w in the format --output-format
-// selects. Text is colored as useColor decides.
+// selects: JSON for formatJSON, and text otherwise, colored as useColor
+// decides.
 func newReporter(g *Globals, w io.Writer) reporter {
 	if g.OutputFormat == formatJSON {
 		return &jsonReporter{w: w}

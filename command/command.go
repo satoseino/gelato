@@ -17,11 +17,8 @@ type Globals struct { //nolint:govet // fieldalignment: kong lists flags in fiel
 	OutputFormat string   `default:"text" enum:"text,json" help:"Report format: \"text\" for people, or \"json\" for scripts and AI agents (exactly one JSON document on stdout). See \"gelato <command> --help\" for the JSON fields and how to resolve a finding." name:"output-format"`
 }
 
-// The --output-format values.
-const (
-	formatText = "text"
-	formatJSON = "json"
-)
+// formatJSON is the --output-format value that selects the JSON report.
+const formatJSON = "json"
 
 // ErrFindings is returned by a command that ran successfully but found
 // secrets. It is the only error that maps to exit code 1.
