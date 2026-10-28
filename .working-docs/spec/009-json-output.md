@@ -16,7 +16,7 @@ In `command/command.go`, add to `Globals` (`command/command.go:13`):
 OutputFormat string `default:"text" enum:"text,json" help:"..." name:"output-format"`
 ```
 
-Add unexported constants `formatText = "text"` and `formatJSON = "json"`. Help text: `Report format: "text" for people, or "json" for scripts and AI agents (exactly one JSON document on stdout). See "gelato <command> --help" for the JSON fields and how to resolve a finding.`
+Add the unexported constant `formatJSON = "json"`; `newReporter` picks text for any other value, so no `formatText` is needed. Help text: `Report format: "text" for people, or "json" for scripts and AI agents (exactly one JSON document on stdout). See "gelato <command> --help" for the JSON fields and how to resolve a finding.`
 
 - It is a global flag so that `pre-commit` and `scan` both get it.
 - The `"` characters in the help text are escaped as `\"` inside the struct tag. A probe build with kong v1.16.1 rendered them correctly.
@@ -105,7 +105,7 @@ Add `func (*PreCommit) Help() string` and `func (*Scan) Help() string`, each wit
    - `signature`: the finding's ID for `exclude-signatures`, computed from `matched_string` and `file_path` only;
    - `issue_type`: `"Regular Expression"` or `"High Entropy"`;
    - `issue_detail`: the regex rule's name, or `null` for High Entropy;
-   - `lines`: the added lines containing `matched_string` (every added line of the change when it spans lines). A line longer than 500 characters is cut to 80 characters on each side of the match, and `…` marks each cut.
+   - `lines`: the added lines containing `matched_string` (every added line of the change when it spans lines). A line longer than 500 characters is cut to 80 characters on each side of the match, or to its first 80 characters when it holds none of the match, and `…` marks each cut.
    - **`scan` only:** `commit_hash`, `commit_time`, `commit_message`: the oldest commit that added the finding.
 4. **Resolving a finding.** First decide whether `matched_string` is a real secret.
    - If it is, remove it from the file and rotate it at its issuer. The `scan` text adds that removing it doesn't remove it from history.
@@ -169,7 +169,7 @@ In the root `gelato --help` (`cmd/gelato/testdata/help.txt`), the only content c
 
 | File | Change |
 |---|---|
-| `command/command.go` | Add `Globals.OutputFormat`, the `formatText`/`formatJSON` constants and the shared `findingHelp` text |
+| `command/command.go` | Add `Globals.OutputFormat`, the `formatJSON` constant and the shared `findingHelp` text |
 | `command/report.go` | `reporter` interface; rename the struct to `textReporter`; `issue` takes `*git.CommitInfo`; remove `field`; add `jsonReporter`, `jsonIssue`, `jsonCommit`; `newReporter` picks the format |
 | `command/scan.go` | Add `Scan.Help()`; `commitMeta` returns `map[int]git.CommitInfo`; pass `&info` to `issue` |
 | `command/precommit.go` | Add `PreCommit.Help()`; pass `nil` commit to `issue` |
