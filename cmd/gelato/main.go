@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"runtime/debug"
 
 	"github.com/alecthomas/kong"
 
@@ -28,8 +29,11 @@ type (
 	exit int
 )
 
+// devVersion is the version of a build that has no version stamped into it.
+const devVersion = "dev"
+
 // version is set at release time with -ldflags "-X main.version=...".
-var version = "dev"
+var version = devVersion
 
 func main() {
 	os.Exit(run(os.Args[1:], os.Stdout, os.Stderr))
@@ -58,10 +62,12 @@ func execute(root any, args []string, stdout, stderr io.Writer, options ...kong.
 		}
 	}()
 
+	info, ok := debug.ReadBuildInfo()
+
 	options = append(options,
 		kong.Name("gelato"),
 		kong.Description("Scan a git repository for secrets."),
-		kong.Vars{"version": version},
+		kong.Vars{"version": resolveVersion(version, info, ok)},
 		kong.Writers(stdout, stderr),
 		kong.Exit(func(code int) { panic(exit(code)) }),
 	)
@@ -77,6 +83,22 @@ func execute(root any, args []string, stdout, stderr io.Writer, options ...kong.
 	}
 
 	return exitCode(stderr, ctx.Run())
+}
+
+// resolveVersion returns stamped, the version set with -ldflags, unless it is
+// devVersion. Builds without -ldflags, such as pre-commit's `go install`, fall
+// back to the main module version that Go stamps from the repository's VCS
+// tag or commit, when there is one.
+func resolveVersion(stamped string, info *debug.BuildInfo, ok bool) string {
+	if stamped != devVersion || !ok {
+		return stamped
+	}
+
+	if v := info.Main.Version; v != "" && v != "(devel)" {
+		return v
+	}
+
+	return stamped
 }
 
 // exitCode maps a command's outcome to the exit code contract: 0 on success,

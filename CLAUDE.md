@@ -57,6 +57,11 @@ Validate and resolve config at load time — fail loudly with a key-qualified er
 
 Use `fmt.Errorf("...: %s", err.Error())` for context-only wrapping — this is the default. Use `%w` conservatively: wrapping with `%w` is a commitment to that error being part of the package's public interface. Reach for it specifically when callers need to distinguish *what kind* of failure occurred, not just *whether* one did — define an exported sentinel named `Err*` and wrap it with `%w`. If the underlying cause is itself a sentinel from another package (e.g. `go-git`'s `plumbing.ErrReferenceNotFound`), don't propagate that one directly; wrap your own `Err*` around it instead, so callers checking `errors.Is` against our API don't break if the underlying library changes. Don't mint a new sentinel for every fallible call — only for failure modes a caller would plausibly branch on.
 
+## Release and distribution (GoReleaser / Homebrew)
+
+- `.goreleaser.yaml` publishes a Homebrew formula to `satoseino/homebrew-tap` through GoReleaser's deprecated `brews:` config, not `homebrew_casks:`. Casks quarantine installed binaries (`com.apple.quarantine`), and Gatekeeper blocks unsigned ones. gelato doesn't code-sign or notarize macOS builds, so switching to a cask would break `gelato` on first run, while formulae install unquarantined. Don't migrate unless macOS builds become signed and notarized, or GoReleaser v3 removes `brews:`. Until then, the release workflow pins `goreleaser-action` to `version: "~> v2"`.
+- `GITHUB_TOKEN` can't push to another repository, so the tap update uses the `HOMEBREW_TAP_TOKEN` repository secret: a fine-grained PAT limited to Contents read/write on `satoseino/homebrew-tap`. If it expires, releases still publish but the tap update fails; rotate the secret.
+
 ## Doc comments
 
 All new or changed exported identifiers require godoc-style comments.

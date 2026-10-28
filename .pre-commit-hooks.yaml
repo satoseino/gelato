@@ -1,0 +1,7 @@
+- id: gelato
+  name: gelato
+  description: Scan lines added in staged changes for secrets.
+  entry: gelato
+  args: [pre-commit]
+  language: golang
+  pass_filenames: false

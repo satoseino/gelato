@@ -1,0 +1,57 @@
+# yaml-language-server: $schema=https://goreleaser.com/static/schema.json
+version: 2
+
+before:
+  hooks:
+    - go mod tidy
+    - ./scripts/third-party-licenses.sh
+
+builds:
+  - main: ./cmd/gelato
+    binary: gelato
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - darwin
+      - windows
+    goarch:
+      - amd64
+      - arm64
+    ldflags:
+      - -s -w -X main.version={{ .Version }}
+
+archives:
+  - formats: [tar.gz]
+    format_overrides:
+      - goos: windows
+        formats: [zip]
+    files:
+      - LICENSE
+      - README.md
+      - THIRD_PARTY_LICENSES
+
+checksum:
+  name_template: checksums.txt
+
+# brews, not homebrew_casks: casks quarantine installed binaries, and
+# Gatekeeper blocks gelato's unsigned, un-notarized macOS builds. brews is
+# deprecated, so every release logs a warning; that is expected.
+brews:
+  - name: gelato
+    repository:
+      owner: satoseino
+      name: homebrew-tap
+      token: "{{ .Env.HOMEBREW_TAP_TOKEN }}"
+    directory: Formula
+    homepage: https://github.com/satoseino/gelato
+    description: "Secret scanner for git repositories, compatible with tartufo config."
+    license: "MIT"
+    # Pre-release tags (v1.0.0-rc.1) don't update the tap.
+    skip_upload: auto
+    # Homebrew copies LICENSE and README.md into the keg on its own, but not
+    # this file, and the BSD-3 notices in it must ship with the binary.
+    extra_install: |
+      prefix.install "THIRD_PARTY_LICENSES"
+    test: |
+      system "#{bin}/gelato", "--version"

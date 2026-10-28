@@ -4,3 +4,6 @@
 # GPL-2.0-only reference clone; must never be committed into this MIT repo.
 /tartufo/
 
+# Generated at release time by scripts/third-party-licenses.sh and GoReleaser.
+/THIRD_PARTY_LICENSES
+/dist/
