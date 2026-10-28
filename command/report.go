@@ -88,9 +88,10 @@ func newReporter(g *Globals, w io.Writer) reporter {
 	return textReporter{w: w, color: useColor(g, w)}
 }
 
-// issue prints i followed by commit's metadata, if any. Unlike tartufo, which prints the whole
-// diff chunk, the body is only the added lines that contain the match, each
-// prefixed with "+"; a match that spans lines prints every line of the chunk.
+// issue prints i followed by commit's metadata, if any. Unlike tartufo, which
+// prints the whole diff chunk, the body is only the added lines that contain
+// the match, each prefixed with "+"; a match that spans lines prints every
+// line of the chunk.
 // A line longer than maxLineRunes runes is shortened to contextRunes runes on
 // each side of the match, or to its first contextRunes runes when it holds
 // none of the match, with "…" marking each cut.
