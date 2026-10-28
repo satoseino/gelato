@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -21,10 +22,9 @@ type (
 )
 
 func TestRun(t *testing.T) {
-	help, err := os.ReadFile(filepath.Join("testdata", "help.txt"))
-	if err != nil {
-		t.Fatal(err)
-	}
+	help := readTestdata(t, "help.txt")
+	helpScan := readTestdata(t, "help-scan.txt")
+	helpPreCommit := readTestdata(t, "help-pre-commit.txt")
 
 	testdata, err := filepath.Abs("testdata")
 	if err != nil {
@@ -45,7 +45,19 @@ func TestRun(t *testing.T) {
 			name:       "help",
 			args:       []string{"--help"},
 			wantCode:   0,
-			wantStdout: string(help),
+			wantStdout: help,
+		},
+		{
+			name:       "scan help",
+			args:       []string{"scan", "--help"},
+			wantCode:   0,
+			wantStdout: helpScan,
+		},
+		{
+			name:       "pre-commit help",
+			args:       []string{"pre-commit", "--help"},
+			wantCode:   0,
+			wantStdout: helpPreCommit,
 		},
 		{
 			name:       "version",
@@ -64,6 +76,18 @@ func TestRun(t *testing.T) {
 			args:       []string{"--bogus"},
 			wantCode:   2,
 			wantStderr: "gelato: error: unknown flag --bogus\n",
+		},
+		{
+			name:       "invalid output format",
+			args:       []string{"--output-format=xml", "pre-commit"},
+			wantCode:   2,
+			wantStderr: `gelato: error: --output-format must be one of "text","json" but got "xml"` + "\n",
+		},
+		{
+			name:       "invalid config with JSON output",
+			args:       []string{"--output-format=json", "--config", invalid, "pre-commit"},
+			wantCode:   2,
+			wantStderr: "gelato: error: " + invalid + ": exclude-signatures[0].note: unknown key\n",
 		},
 		{
 			name:       "invalid config",
@@ -126,6 +150,17 @@ func TestRun(t *testing.T) {
 	}
 }
 
+func readTestdata(t *testing.T, name string) string {
+	t.Helper()
+
+	data, err := os.ReadFile(filepath.Join("testdata", name))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	return string(data)
+}
+
 func (findingsCommand) Run() error {
 	return fmt.Errorf("3 issues: %w", command.ErrFindings)
 }
@@ -174,5 +209,28 @@ func TestRunScan(t *testing.T) {
 
 	if want := "All clear. No secrets detected.\n"; stdout.String() != want {
 		t.Errorf("stdout = %q, want %q", stdout.String(), want)
+	}
+}
+
+// TestRunScanJSON checks that the JSON report of a clean scan goes to run's
+// stdout as one document with an empty found_issues.
+func TestRunScanJSON(t *testing.T) {
+	repo := gittest.New(t)
+	repo.Write("a.txt", "one\n")
+	repo.Commit("init")
+
+	var stdout, stderr bytes.Buffer
+
+	if code := run([]string{"scan", "--output-format=json", repo.Dir}, &stdout, &stderr); code != 0 {
+		t.Errorf("exit code = %d, want 0; stderr %q", code, stderr.String())
+	}
+
+	var doc map[string][]any
+	if err := json.Unmarshal(stdout.Bytes(), &doc); err != nil {
+		t.Fatalf("stdout %q is not JSON: %v", stdout.String(), err)
+	}
+
+	if issues, ok := doc["found_issues"]; !ok || issues == nil || len(issues) != 0 {
+		t.Errorf("stdout = %q, want an empty found_issues", stdout.String())
 	}
 }

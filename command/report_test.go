@@ -2,6 +2,7 @@ package command
 
 import (
 	"bytes"
+	"encoding/json"
 	"os"
 	"path/filepath"
 	"strings"
@@ -9,13 +10,14 @@ import (
 	"unicode/utf8"
 
 	"github.com/satoseino/gelato/detect"
+	"github.com/satoseino/gelato/git"
 )
 
 func TestReporterIssue(t *testing.T) {
 	tests := []struct {
-		name  string
-		issue detect.Issue
-		meta  []field
+		name   string
+		commit *git.CommitInfo
+		issue  detect.Issue
 	}{
 		{
 			name: "regex",
@@ -51,7 +53,7 @@ func TestReporterIssue(t *testing.T) {
 				Type: detect.RegexIssue, Detail: "Example rule", Match: "MATCH", Path: "a.txt", Signature: "sig",
 				Chunk: detect.Chunk{Path: "a.txt", Lines: []string{"MATCH"}},
 			},
-			meta: []field{{label: "Commit hash", value: "0123abcd"}, {label: "Branch", value: "main"}},
+			commit: &git.CommitInfo{Hash: "0123abcd", Time: "2020-01-01T00:00:00Z", Subject: "add key"},
 		},
 		{
 			// The second occurrence falls inside the window, the third outside.
@@ -88,7 +90,7 @@ func TestReporterIssue(t *testing.T) {
 			}
 
 			var buf bytes.Buffer
-			if err := (reporter{w: &buf}).issue(tt.issue, tt.meta); err != nil {
+			if err := (textReporter{w: &buf}).issue(tt.issue, tt.commit); err != nil {
 				t.Fatal(err)
 			}
 
@@ -171,7 +173,7 @@ func TestReporterColor(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			var buf bytes.Buffer
-			if err := (reporter{w: &buf, color: true}).issue(tt.issue, nil); err != nil {
+			if err := (textReporter{w: &buf, color: true}).issue(tt.issue, nil); err != nil {
 				t.Fatal(err)
 			}
 
@@ -307,13 +309,114 @@ func TestReporterSummary(t *testing.T) {
 
 	for _, tt := range tests {
 		var buf bytes.Buffer
-		if err := (reporter{w: &buf}).summary(tt.n); err != nil {
+		if err := (textReporter{w: &buf}).summary(tt.n); err != nil {
 			t.Fatal(err)
 		}
 
 		if got := buf.String(); got != tt.want {
 			t.Errorf("summary(%d) = %q, want %q", tt.n, got, tt.want)
 		}
+	}
+}
+
+func TestJSONReporter(t *testing.T) {
+	commit := &git.CommitInfo{Hash: "0123abcd", Time: "2020-01-01T00:00:00Z", Subject: "add key"}
+
+	tests := []struct {
+		commit *git.CommitInfo
+		name   string
+		issues []detect.Issue
+	}{
+		{name: "empty"},
+		{
+			name:   "regex-commit",
+			commit: commit,
+			issues: []detect.Issue{{
+				Type: detect.RegexIssue, Detail: "Example rule", Match: "MATCH", Path: "dir/a.txt", Signature: "sig",
+				Chunk: detect.Chunk{Path: "dir/a.txt", Lines: []string{"one", "two MATCH two", "three"}},
+			}},
+		},
+		{
+			name: "entropy",
+			issues: []detect.Issue{
+				{
+					Type: detect.EntropyIssue, Match: "MATCH", Path: "a.txt", Signature: "sig",
+					Chunk: detect.Chunk{Path: "a.txt", Lines: []string{"x MATCH y MATCH", "clean", "MATCH z"}},
+				},
+				{
+					Type: detect.EntropyIssue, Match: "OTHER", Path: "b.txt", Signature: "sig2",
+					Chunk: detect.Chunk{Path: "b.txt", Lines: []string{"OTHER"}},
+				},
+			},
+		},
+		{
+			name: "multiline",
+			issues: []detect.Issue{{
+				Type: detect.RegexIssue, Detail: "Multi-line rule", Match: "of\nthe", Path: "a.txt", Signature: "sig",
+				Chunk: detect.Chunk{Path: "a.txt", Lines: []string{"before", "start of", "the match", "after"}},
+			}},
+		},
+		{
+			name: "long",
+			issues: []detect.Issue{{
+				Type: detect.EntropyIssue, Match: "MATCH", Path: "a.txt", Signature: "sig",
+				Chunk: detect.Chunk{Path: "a.txt", Lines: []string{
+					strings.Repeat("a", 300) + "MATCH" + strings.Repeat("b", 300),
+				}},
+			}},
+		},
+		{
+			name: "html",
+			issues: []detect.Issue{{
+				Type: detect.RegexIssue, Detail: "Example rule", Match: "<a&b>", Path: "a.html", Signature: "sig",
+				Chunk: detect.Chunk{Path: "a.html", Lines: []string{"x = <a&b>"}},
+			}},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			want, err := os.ReadFile(filepath.Join("testdata", "report", tt.name+".json"))
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			var buf bytes.Buffer
+
+			r := newReporter(&Globals{OutputFormat: formatJSON}, &buf)
+			for _, i := range tt.issues {
+				if err := r.issue(i, tt.commit); err != nil {
+					t.Fatal(err)
+				}
+			}
+
+			if err := r.summary(len(tt.issues)); err != nil {
+				t.Fatal(err)
+			}
+
+			if got := buf.String(); got != string(want) {
+				t.Errorf("got:\n%s\nwant:\n%s", got, want)
+			}
+
+			// encoding/json can't unmarshal into jsonIssue's embedded pointer
+			// to an unexported struct, so decode generically.
+			var doc struct {
+				FoundIssues []map[string]any `json:"found_issues"`
+			}
+			if err := json.Unmarshal(buf.Bytes(), &doc); err != nil {
+				t.Fatal(err)
+			}
+
+			if len(doc.FoundIssues) != len(tt.issues) {
+				t.Fatalf("found_issues has %d issues, want %d", len(doc.FoundIssues), len(tt.issues))
+			}
+
+			for k, i := range tt.issues {
+				if got := doc.FoundIssues[k]["matched_string"]; got != i.Match {
+					t.Errorf("found_issues[%d].matched_string = %q, want %q", k, got, i.Match)
+				}
+			}
+		})
 	}
 }
 

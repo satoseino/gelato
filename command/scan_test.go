@@ -92,6 +92,37 @@ func TestScanAddedThenRemoved(t *testing.T) {
 	}
 }
 
+// TestScanJSON checks the JSON report of TestScanAddedThenRemoved's
+// repository, and that it is identical across runs.
+func TestScanJSON(t *testing.T) {
+	repo := gittest.New(t)
+	repo.Write("README", "readme\n")
+	repo.Commit("init")
+	repo.Write("config.py", "aws_access_key_id = "+keyID+"\n")
+	repo.Write("notes.txt", "value: "+highEntropy+"\n")
+	repo.Commit("add key")
+	added := rev(repo, "HEAD")
+	repo.Write("config.py", "clean = 1\n")
+	repo.Git("rm", "--quiet", "notes.txt")
+	repo.Commit("remove key")
+
+	out, err := scan(t, repo.Dir, "", &Globals{OutputFormat: formatJSON})
+	assertFindings(t, err)
+
+	want := render(t, filepath.Join("scan", "added-removed.json.tmpl"),
+		scanFixture{KeyID: keyID, Entropy: highEntropy, Commit: added})
+	if out != want {
+		t.Errorf("output:\n%s\nwant:\n%s", out, want)
+	}
+
+	again, err := scan(t, repo.Dir, "", &Globals{OutputFormat: formatJSON})
+	assertFindings(t, err)
+
+	if again != out {
+		t.Errorf("output differs between runs:\n%s\nvs\n%s", out, again)
+	}
+}
+
 // TestScanMerge checks that a secret added on a side branch is reported once,
 // at the side-branch commit, although the merge re-shows it.
 func TestScanMerge(t *testing.T) {

@@ -1,0 +1,25 @@
+{
+  "found_issues": [
+    {
+      "file_path": "a.txt",
+      "matched_string": "MATCH",
+      "signature": "sig",
+      "issue_type": "High Entropy",
+      "issue_detail": null,
+      "lines": [
+        "x MATCH y MATCH",
+        "MATCH z"
+      ]
+    },
+    {
+      "file_path": "b.txt",
+      "matched_string": "OTHER",
+      "signature": "sig2",
+      "issue_type": "High Entropy",
+      "issue_detail": null,
+      "lines": [
+        "OTHER"
+      ]
+    }
+  ]
+}

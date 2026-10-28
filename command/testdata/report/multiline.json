@@ -1,0 +1,17 @@
+{
+  "found_issues": [
+    {
+      "file_path": "a.txt",
+      "matched_string": "of\nthe",
+      "signature": "sig",
+      "issue_type": "Regular Expression",
+      "issue_detail": "Multi-line rule",
+      "lines": [
+        "before",
+        "start of",
+        "the match",
+        "after"
+      ]
+    }
+  ]
+}

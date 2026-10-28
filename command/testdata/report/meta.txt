@@ -4,6 +4,7 @@ Detail: Example rule
 Filepath: a.txt
 Signature: sig
 Commit hash: 0123abcd
-Branch: main
+Commit time: 2020-01-01T00:00:00Z
+Commit message: add key
 +MATCH
 ~~~~~~~~~~~~~~~~~~~~~

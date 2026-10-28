@@ -1,0 +1,14 @@
+{
+  "found_issues": [
+    {
+      "file_path": "a.html",
+      "matched_string": "<a&b>",
+      "signature": "sig",
+      "issue_type": "Regular Expression",
+      "issue_detail": "Example rule",
+      "lines": [
+        "x = <a&b>"
+      ]
+    }
+  ]
+}

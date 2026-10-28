@@ -42,6 +42,12 @@ type (
 	}
 )
 
+// Help returns the guide to reading and resolving a finding that kong prints
+// under scan --help.
+func (*Scan) Help() string {
+	return findingHelp(true)
+}
+
 // AfterApply loads the configuration for the repository being scanned and
 // sets up the report written to w.
 func (c *Scan) AfterApply(g *Globals, w io.Writer) error {
@@ -90,7 +96,8 @@ func (c *Scan) Run() error {
 	}
 
 	for _, f := range found {
-		if err := c.out.issue(f.issue, meta[f.commit]); err != nil {
+		info := meta[f.commit]
+		if err := c.out.issue(f.issue, &info); err != nil {
 			return err
 		}
 	}
@@ -218,16 +225,16 @@ func dedup(found []finding) []finding {
 	return kept
 }
 
-// commitMeta returns the report fields of every commit with an issue in
-// found, keyed by rev-list index.
-func commitMeta(ctx context.Context, repo *git.Repo, commits []git.Commit, found []finding) (map[int][]field, error) {
+// commitMeta returns the metadata of every commit with an issue in found,
+// keyed by rev-list index.
+func commitMeta(ctx context.Context, repo *git.Repo, commits []git.Commit, found []finding) (map[int]git.CommitInfo, error) {
 	var ids []string
 
-	meta := map[int][]field{}
+	meta := map[int]git.CommitInfo{}
 
 	for _, f := range found {
 		if _, ok := meta[f.commit]; !ok {
-			meta[f.commit] = nil
+			meta[f.commit] = git.CommitInfo{}
 			ids = append(ids, commits[f.commit].ID)
 		}
 	}
@@ -238,12 +245,7 @@ func commitMeta(ctx context.Context, repo *git.Repo, commits []git.Commit, found
 	}
 
 	for k := range meta {
-		info := infos[commits[k].ID]
-		meta[k] = []field{
-			{label: "Commit hash", value: info.Hash},
-			{label: "Commit time", value: info.Time},
-			{label: "Commit message", value: info.Subject},
-		}
+		meta[k] = infos[commits[k].ID]
 	}
 
 	return meta, nil

@@ -1,25 +1,61 @@
 package command
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 	"strings"
 	"unicode/utf8"
 
 	"github.com/satoseino/gelato/detect"
+	"github.com/satoseino/gelato/git"
 )
 
 type (
-	// reporter prints issues in tartufo's text layout.
-	reporter struct {
+	// reporter writes a report: one call to issue per finding, in report
+	// order, then one call to summary.
+	reporter interface {
+		// issue reports i, found in commit, or in no commit when commit is
+		// nil.
+		issue(i detect.Issue, commit *git.CommitInfo) error
+		// summary ends a report of n issues.
+		summary(n int) error
+	}
+
+	// textReporter prints issues in tartufo's text layout.
+	textReporter struct {
 		w     io.Writer
 		color bool
 	}
 
-	// field is a labeled line of an issue's metadata, such as its commit.
-	field struct {
-		label string
-		value string
+	// jsonReporter collects issues and writes them as one JSON document,
+	// with tartufo's keys, when the report ends.
+	jsonReporter struct {
+		w      io.Writer
+		issues []jsonIssue
+	}
+
+	// jsonIssue is one element of the JSON report's found_issues.
+	jsonIssue struct { //nolint:govet // fieldalignment: encoding/json emits keys in field order, which follows tartufo's.
+		FilePath      string           `json:"file_path"`
+		MatchedString string           `json:"matched_string"`
+		Signature     string           `json:"signature"`
+		IssueType     detect.IssueType `json:"issue_type"`
+		// IssueDetail is nil, emitted as null, for a High Entropy issue.
+		IssueDetail *string `json:"issue_detail"`
+		// Lines replaces tartufo's diff, the whole chunk, with the body lines
+		// of the text report.
+		Lines []string `json:"lines"`
+		// jsonCommit is nil, leaving out its keys, for an issue found in no
+		// commit.
+		*jsonCommit
+	}
+
+	// jsonCommit is the commit metadata of a jsonIssue.
+	jsonCommit struct {
+		CommitHash    string `json:"commit_hash"`
+		CommitTime    string `json:"commit_time"`
+		CommitMessage string `json:"commit_message"`
 	}
 )
 
@@ -42,18 +78,25 @@ const (
 	styleReset   = "\x1b[0m"
 )
 
-// newReporter returns a reporter writing to w, colored as useColor decides.
+// newReporter returns a reporter writing to w in the format --output-format
+// selects: JSON for formatJSON, and text otherwise, colored as useColor
+// decides.
 func newReporter(g *Globals, w io.Writer) reporter {
-	return reporter{w: w, color: useColor(g, w)}
+	if g.OutputFormat == formatJSON {
+		return &jsonReporter{w: w}
+	}
+
+	return textReporter{w: w, color: useColor(g, w)}
 }
 
-// issue prints i followed by meta. Unlike tartufo, which prints the whole
-// diff chunk, the body is only the added lines that contain the match, each
-// prefixed with "+"; a match that spans lines prints every line of the chunk.
+// issue prints i followed by commit's metadata, if any. Unlike tartufo, which
+// prints the whole diff chunk, the body is only the added lines that contain
+// the match, each prefixed with "+"; a match that spans lines prints every
+// line of the chunk.
 // A line longer than maxLineRunes runes is shortened to contextRunes runes on
 // each side of the match, or to its first contextRunes runes when it holds
 // none of the match, with "…" marking each cut.
-func (r reporter) issue(i detect.Issue, meta []field) error {
+func (r textReporter) issue(i detect.Issue, commit *git.CommitInfo) error {
 	var b strings.Builder
 
 	b.WriteString(issueSeparator + "\n")
@@ -66,8 +109,10 @@ func (r reporter) issue(i detect.Issue, meta []field) error {
 	r.line(&b, "Filepath: "+i.Path)
 	r.line(&b, "Signature: "+i.Signature)
 
-	for _, f := range meta {
-		r.line(&b, f.label+": "+f.value)
+	if commit != nil {
+		r.line(&b, "Commit hash: "+commit.Hash)
+		r.line(&b, "Commit time: "+commit.Time)
+		r.line(&b, "Commit message: "+commit.Subject)
 	}
 
 	body := strings.Join(excerpts(i), "\n")
@@ -87,7 +132,7 @@ func (r reporter) issue(i detect.Issue, meta []field) error {
 }
 
 // summary prints the line that ends a report of n issues.
-func (r reporter) summary(n int) error {
+func (r textReporter) summary(n int) error {
 	var err error
 	if n == 0 {
 		_, err = io.WriteString(r.w, "All clear. No secrets detected.\n")
@@ -99,7 +144,7 @@ func (r reporter) summary(n int) error {
 }
 
 // line writes s as a bright green line.
-func (r reporter) line(b *strings.Builder, s string) {
+func (r textReporter) line(b *strings.Builder, s string) {
 	if r.color {
 		s = styleOK + s + styleReset
 	}
@@ -109,7 +154,7 @@ func (r reporter) line(b *strings.Builder, s string) {
 
 // highlight styles match bright yellow, one line at a time, so that every
 // body line keeps its own "+" prefix outside the escape sequences.
-func (r reporter) highlight(match string) string {
+func (r textReporter) highlight(match string) string {
 	if !r.color {
 		return match
 	}
@@ -122,6 +167,48 @@ func (r reporter) highlight(match string) string {
 	}
 
 	return strings.Join(segments, "\n")
+}
+
+// issue adds i to the report. Its lines are the text report's body lines,
+// without the "+" prefix or highlighting.
+func (r *jsonReporter) issue(i detect.Issue, commit *git.CommitInfo) error {
+	j := jsonIssue{
+		FilePath:      i.Path,
+		MatchedString: i.Match,
+		Signature:     i.Signature,
+		IssueType:     i.Type,
+		Lines:         excerpts(i),
+	}
+
+	if i.Detail != "" {
+		j.IssueDetail = &i.Detail
+	}
+
+	if commit != nil {
+		j.jsonCommit = &jsonCommit{CommitHash: commit.Hash, CommitTime: commit.Time, CommitMessage: commit.Subject}
+	}
+
+	r.issues = append(r.issues, j)
+
+	return nil
+}
+
+// summary writes the report as {"found_issues": [...]}, indented and ending
+// in a newline. HTML characters stay unescaped, so that matched_string can be
+// copied as it is. The issue count is the length of found_issues.
+func (r *jsonReporter) summary(_ int) error {
+	issues := r.issues
+	if issues == nil {
+		issues = []jsonIssue{}
+	}
+
+	enc := json.NewEncoder(r.w)
+	enc.SetEscapeHTML(false)
+	enc.SetIndent("", "  ")
+
+	return enc.Encode(struct {
+		FoundIssues []jsonIssue `json:"found_issues"`
+	}{FoundIssues: issues})
 }
 
 // bodyLines returns the lines of i's chunk that an issue's body shows.
