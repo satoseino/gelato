@@ -61,7 +61,8 @@ is empty. Each issue has these keys:
   - issue_detail: the regex rule's name, or null for High Entropy.
   - lines: the added lines containing matched_string (every added line of the
     change when it spans lines). A line longer than 500 characters is cut to
-    80 characters on each side of the match, and "…" marks each cut.
+    80 characters on each side of the match, or to its first 80 characters
+    when it holds none of the match, and "…" marks each cut.
 `)
 
 	if scan {
