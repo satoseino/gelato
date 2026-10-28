@@ -5,3 +5,10 @@ repos:
       - id: golangci-lint-config-verify
       - id: golangci-lint-fmt
       - id: golangci-lint-full
+
+  # Dogfood the released hook. CI runs only the golangci-lint hooks by id
+  # (make lint), so this scans local commits only.
+  - repo: https://github.com/satoseino/gelato
+    rev: v0.1.0
+    hooks:
+      - id: gelato
