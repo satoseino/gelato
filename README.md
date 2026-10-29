@@ -21,6 +21,8 @@ repos:
 
 pre-commit builds the hook from source with Go (`language: golang`), downloading a Go toolchain into its own environment when none is available. The build is cached per `rev`, so upgrading Python doesn't break the hook.
 
+To run a `gelato` you installed with [Homebrew](#homebrew-macos-and-linux) or from a [release binary](#binary) instead, use `id: gelato-system`. It needs pre-commit 4.4.0 or newer and builds nothing; `rev` then selects only the hook definition, and the `gelato` on `PATH` decides the version that runs.
+
 ### Homebrew (macOS and Linux)
 
 ```sh

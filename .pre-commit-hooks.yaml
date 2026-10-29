@@ -5,3 +5,12 @@
   args: [pre-commit]
   language: golang
   pass_filenames: false
+
+- id: gelato-system
+  name: gelato
+  description: Scan lines added in staged changes for secrets, using the gelato binary on PATH.
+  entry: gelato
+  args: [pre-commit]
+  language: unsupported
+  pass_filenames: false
+  minimum_pre_commit_version: 4.4.0
